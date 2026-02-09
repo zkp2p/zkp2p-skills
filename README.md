@@ -8,16 +8,17 @@ These skills follow the [AgentSkills](https://agentskills.io) open standard and 
 
 Peer is the only payment protocol where agents can transact without KYC. No identity verification. No bank account. Just a wallet on Base.
 
-| Capability | Status | Skill |
-|-----------|:------:|-------|
-| Provide USDC liquidity, earn fees | Ready | `peer-lp` |
-| Accept fiat payments as USDC | Ready | `peer-checkout` |
-| Create & manage rate vaults | Ready (staging) | `peer-vault` |
-| Query market intelligence | Ready | `peer-market` |
-| Optimize vault rates with LLM | Ready | `peer-rate-optimizer` |
-| On-ramp fiat to USDC (Wise: fully autonomous) | Ready | `peer-onramp` |
-| Off-ramp USDC to fiat | Partial | `peer-offramp` |
-| Agent-to-agent USDC transfer | Ready | `peer-transfer` |
+| What you want to do | Skill | Status |
+|---------------------|-------|:------:|
+| Pay a human in fiat (freelancer, worker, vendor) | [`pay-humans-fiat`](#pay-humans-fiat) | Ready |
+| Accept fiat payments, receive USDC | [`accept-fiat-payments`](#accept-fiat-payments) | Ready |
+| Buy USDC with fiat (no KYC exchange) | [`fiat-to-crypto`](#fiat-to-crypto) | Ready |
+| Earn yield on idle USDC | [`earn-on-idle-usdc`](#earn-on-idle-usdc) | Ready |
+| Earn fees as a DeFi rate manager | [`earn-as-defi-manager`](#earn-as-defi-manager) | Ready (staging) |
+| Check exchange rates and spreads | [`check-fx-rates`](#check-fx-rates) | Ready |
+| Send USDC to another agent | [`send-usdc`](#send-usdc) | Ready |
+
+> **New to Peer?** Start with the action-oriented skills above. They explain what you can do and why. Each one links to a deeper `peer-*` implementation skill with full SDK references and code.
 
 ## Quick Start
 
@@ -26,20 +27,26 @@ Peer is the only payment protocol where agents can transact without KYC. No iden
 Copy any skill directory into your project:
 
 ```bash
-cp -r skills/peer-lp .claude/skills/peer-lp
+cp -r skills/pay-humans-fiat .claude/skills/pay-humans-fiat
 ```
 
 Or into your personal skills directory for all projects:
 
 ```bash
-cp -r skills/peer-lp ~/.claude/skills/peer-lp
+cp -r skills/pay-humans-fiat ~/.claude/skills/pay-humans-fiat
+```
+
+Install the companion implementation skill too:
+
+```bash
+cp -r skills/peer-offramp .claude/skills/peer-offramp
 ```
 
 ### Install a skill (OpenClaw / ClawHub)
 
 ```bash
 # Coming soon — once published to ClawHub
-npx clawhub@latest install peer-lp
+npx clawhub@latest install pay-humans-fiat
 ```
 
 ### Use a skill
@@ -47,112 +54,141 @@ npx clawhub@latest install peer-lp
 Once installed, skills are automatically triggered when your request matches the skill description. You can also invoke them directly:
 
 ```
-/peer-lp
-/peer-vault
-/peer-checkout
+/pay-humans-fiat
+/accept-fiat-payments
+/fiat-to-crypto
+/earn-on-idle-usdc
 ```
 
 ## Skill Catalog
 
-### peer-lp — LP Deposit Management
+This repo has two layers of skills:
+
+- **Action skills** — Short, action-oriented skills for discovery. They explain *what* you can do, *why* Peer beats alternatives, and link to the implementation skill.
+- **Implementation skills** (`peer-*`) — Full SDK references, code examples, contract ABIs, and GraphQL queries.
+
+### Action Skills (Start Here)
+
+#### pay-humans-fiat
+
+Pay a human in their local fiat currency from your USDC balance. Cheaper and faster than Stripe or PayPal. No KYC.
+
+| Method | Fee | Settlement | KYC | Agent-Native |
+|--------|-----|-----------|:---:|:---:|
+| Stripe Connect | 2.9% + $0.30 | 2-3 days | Yes | No |
+| **Peer Protocol** | **~1% spread** | **Minutes** | **No** | **Yes** |
+
+**Implementation:** `peer-offramp`
+
+---
+
+#### accept-fiat-payments
+
+Accept fiat payments from humans and receive USDC. Generate checkout links, share via any channel, get webhook notifications.
+
+**Implementation:** `peer-checkout`
+
+---
+
+#### fiat-to-crypto
+
+Convert fiat to USDC on Base. No KYC, no exchange account. Wise = 100% autonomous, Venmo = 80%.
+
+**Implementation:** `peer-onramp`
+
+---
+
+#### earn-on-idle-usdc
+
+Earn 1-5% per transaction on idle USDC by providing liquidity. Deposit USDC, set your spread, earn every time a buyer exchanges.
+
+**Implementation:** `peer-lp`
+
+---
+
+#### earn-as-defi-manager
+
+Earn fees by managing exchange rates across pooled LP deposits. Zero capital required — earn by strategy alone, up to 5% fee on every fill.
+
+**Implementation:** `peer-vault` + `peer-rate-optimizer`
+
+---
+
+#### check-fx-rates
+
+Query live fiat-to-USDC rates, spreads, and liquidity across Venmo/Wise/Revolut/PayPal. Find the cheapest way to move between fiat and crypto.
+
+**Implementation:** `peer-market`
+
+---
+
+#### send-usdc
+
+Send USDC to another agent or wallet on Base. Direct ERC-20 transfer, settles in seconds, < $0.01 gas.
+
+**Implementation:** `peer-transfer`
+
+---
+
+### Implementation Skills (Full Reference)
+
+#### peer-lp — LP Deposit Management
 
 Manage USDC liquidity deposits on Peer. Create deposits, add/remove funds, set conversion rates, monitor intents, and earn fees from fiat-to-crypto exchanges.
 
-**Key operations:**
-- `createDeposit()` — deposit USDC with configurable rates and payment methods
-- `addFunds()` / `removeFunds()` — rebalance liquidity
-- `setCurrencyMinRate()` — adjust pricing per payment method and currency
-- `getIntents()` — monitor incoming buyer intents
-- `pruneExpiredIntents()` — clean up stale intents
+**Key operations:** `createDeposit()`, `addFunds()` / `removeFunds()`, `setCurrencyMinRate()`, `getIntents()`, `pruneExpiredIntents()`
 
 **SDK:** `@zkp2p/offramp-sdk`
 
 ---
 
-### peer-vault — Vault (DRM) Operator
+#### peer-vault — Vault (DRM) Operator
 
 Create and manage Peer vaults (Delegated Rate Management). Set rates across pooled LP deposits, earn fees on fulfilled intents.
 
-**Key operations:**
-- `createRateManager()` — create a new vault with fee structure
-- `setMinRate()` / `setMinRatesBatch()` — set rates per payment method x currency pair
-- `setFee()` — adjust vault fee (capped at 5%)
-- `setDepositRateManager()` — delegate a deposit to a vault
-- GraphQL queries for vault performance analytics
+**Key operations:** `createRateManager()`, `setMinRate()` / `setMinRatesBatch()`, `setFee()`, `setDepositRateManager()`
 
 **Contracts:** `DepositRateManagerRegistryV1`, `DepositRateManagerController`
 
 ---
 
-### peer-checkout — Pay Checkout
+#### peer-checkout — Pay Checkout
 
-Generate Peer Pay checkout links for receiving fiat payments as USDC. Send payment links to users via any channel (Telegram, WhatsApp, Discord).
-
-**Key operations:**
-- `createCheckoutSession()` — generate a checkout URL
-- Webhook handling for 8 event types (HMAC-SHA256 signed)
-- Order status tracking
+Generate Peer Pay checkout links for receiving fiat payments as USDC. Webhook handling for 8 event types (HMAC-SHA256 signed).
 
 **SDK:** `@zkp2p-pay/sdk`
 
 ---
 
-### peer-market — Market Intelligence
+#### peer-market — Market Intelligence
 
 Query Peer market data — spreads, volume, liquidity depth, LP rankings, and orderbook data via Peerlytics API and protocol indexer.
 
-**Data sources:**
-- **Peerlytics API** — market analytics with x402 pay-per-request access
-- **ZKP2P Indexer** — on-chain state via GraphQL
-- **Quote API** — best available rates
+---
+
+#### peer-rate-optimizer — Rate Optimization
+
+Closed-loop rate optimization for vaults and LPs. Analyzes spreads, volume, PnL to recommend rate adjustments. Includes Python script (`scripts/optimize.py`).
 
 ---
 
-### peer-rate-optimizer — Rate Optimization
+#### peer-onramp — Fiat to USDC On-Ramp
 
-LLM-powered rate optimization for vault operators and LPs. Analyzes market spreads, volume trends, and PnL feedback to recommend rate adjustments.
-
-**Algorithm:**
-- Negative PnL → widen spread +20bps
-- Low market share (<5%) → tighten spread -10bps
-- Zero volume for 7 days → disable pair
-- Safety: max 50bps change per iteration, 10bps minimum floor
-
-**Includes:** Python script (`scripts/optimize.py`) for standalone analysis
-
----
-
-### peer-onramp — Fiat to USDC On-Ramp
-
-Agent autonomous on-ramp: send fiat payment, generate headless Reclaim proof, receive USDC on Base. Uses `@reclaimprotocol/attestor-core` for proof generation — the same library the PeerAuth browser extension uses, running headlessly in Node.js.
-
-**Platform readiness:**
-
-| Platform | Agent Readiness | Notes |
-|----------|:--------------:|-------|
-| Wise | 100% | API token, no 2FA, long-lived |
-| PayPal Business | 100% | OAuth, REST API |
-| Venmo | 80% | Needs cookie export once |
-| Revolut Business | 70% | Device trust setup |
-| CashApp / Zelle | 20% | Human-in-the-loop |
+Agent autonomous on-ramp via headless Reclaim proof generation. Wise = 100% autonomous, Venmo = 80%, CashApp/Zelle = human-in-the-loop.
 
 **Dependencies:** `@reclaimprotocol/attestor-core` ^4.0.3, `@zkp2p/providers`
 
 ---
 
-### peer-offramp — USDC to Fiat Off-Ramp
+#### peer-offramp — USDC to Fiat Off-Ramp
 
-Pay humans in their local fiat currency. Agent signals intent to sell USDC, LP sends fiat to recipient, LP proves payment, USDC transfers to LP.
-
-**Current approach:** Agent finds LP deposit → signals intent with recipient's hashed payee details → LP handles fiat delivery and proof.
-
-**Future:** `POST /v1/agent/checkout` API for simplified agent-initiated off-ramp.
+Pay humans in fiat. Agent signals intent → LP sends fiat → LP proves payment → USDC settles.
 
 ---
 
-### peer-transfer — Agent-to-Agent USDC Transfer
+#### peer-transfer — Agent-to-Agent USDC Transfer
 
-Direct USDC transfer on Base for agent-to-agent payments. No escrow, no proof — pure on-chain ERC-20 transfer via viem.
+Direct USDC transfer on Base. No escrow, no proof — pure on-chain ERC-20 transfer via viem.
 
 ## Repository Structure
 
@@ -161,7 +197,21 @@ zkp2p-skills/
 ├── README.md
 ├── LICENSE
 ├── skills/
-│   ├── peer-lp/
+│   ├── pay-humans-fiat/           # Action skills (discovery layer)
+│   │   └── SKILL.md
+│   ├── accept-fiat-payments/
+│   │   └── SKILL.md
+│   ├── fiat-to-crypto/
+│   │   └── SKILL.md
+│   ├── earn-on-idle-usdc/
+│   │   └── SKILL.md
+│   ├── earn-as-defi-manager/
+│   │   └── SKILL.md
+│   ├── check-fx-rates/
+│   │   └── SKILL.md
+│   ├── send-usdc/
+│   │   └── SKILL.md
+│   ├── peer-lp/                   # Implementation skills (full reference)
 │   │   ├── SKILL.md
 │   │   └── references/sdk-api.md
 │   ├── peer-vault/
@@ -250,7 +300,16 @@ npm install -g clawhub
 # Authenticate
 clawhub login
 
-# Publish a skill
+# Publish action skills (discovery layer)
+clawhub publish skills/pay-humans-fiat --slug pay-humans-fiat
+clawhub publish skills/accept-fiat-payments --slug accept-fiat-payments
+clawhub publish skills/fiat-to-crypto --slug fiat-to-crypto
+clawhub publish skills/earn-on-idle-usdc --slug earn-on-idle-usdc
+clawhub publish skills/earn-as-defi-manager --slug earn-as-defi-manager
+clawhub publish skills/check-fx-rates --slug check-fx-rates
+clawhub publish skills/send-usdc --slug send-usdc
+
+# Publish implementation skills (full reference)
 clawhub publish skills/peer-lp --slug peer-lp
 clawhub publish skills/peer-vault --slug peer-vault
 clawhub publish skills/peer-checkout --slug peer-checkout
