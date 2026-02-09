@@ -1,5 +1,5 @@
 ---
-name: zkp2p-checkout
+name: peer-checkout
 description: Generate ZKP2P Pay checkout links for receiving fiat payments as USDC. Create checkout sessions, send payment links to users, and handle webhook notifications for payment completion. Use when the user wants to accept payments, generate a payment link, or receive fiat payments as crypto.
 ---
 

@@ -1,5 +1,5 @@
 ---
-name: zkp2p-transfer
+name: peer-transfer
 description: Transfer USDC between agent wallets on Base chain. Direct on-chain settlement for agent-to-agent payments without ZKP2P escrow. Use when the user wants to send USDC to another agent, transfer tokens, or settle agent-to-agent payments.
 ---
 

@@ -1,5 +1,5 @@
 ---
-name: zkp2p-vault
+name: peer-vault
 description: Create and manage ZKP2P vaults (Delegated Rate Management). Set rates across pooled LP deposits, earn fees on fulfilled intents, and optimize pricing strategy. Use when the user wants to create a vault, manage vault rates, delegate deposits, or operate as a vault manager on ZKP2P.
 ---
 

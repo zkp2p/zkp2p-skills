@@ -1,5 +1,5 @@
 ---
-name: zkp2p-rate-optimizer
+name: peer-rate-optimizer
 description: Optimize ZKP2P vault and LP deposit rates using market intelligence and PnL feedback. Analyzes spreads, volume, and performance data to recommend or execute rate adjustments. Use when the user wants to optimize rates, improve LP returns, or automate rate management strategy.
 ---
 

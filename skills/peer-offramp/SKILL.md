@@ -1,5 +1,5 @@
 ---
-name: zkp2p-offramp
+name: peer-offramp
 description: Off-ramp USDC to fiat via ZKP2P protocol. Pay humans in their local fiat currency by matching with LP liquidity. Use when the agent needs to pay a human freelancer, convert USDC to fiat, or send fiat payments to non-crypto users.
 ---
 

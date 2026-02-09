@@ -1,23 +1,23 @@
-# ZKP2P Agent Skills
+# Peer Agent Skills
 
-Agent Skills for AI agents to interact with the [ZKP2P (Peer)](https://peer.xyz) protocol — permissionless fiat-to-crypto exchange on Base.
+Agent Skills for AI agents to interact with the [Peer (ZKP2P)](https://peer.xyz) protocol — permissionless fiat-to-crypto exchange on Base.
 
 These skills follow the [AgentSkills](https://agentskills.io) open standard and work with Claude Code, OpenClaw, Cursor, Gemini CLI, and any AgentSkills-compatible runtime.
 
-## Why ZKP2P for Agents
+## Why Peer for Agents
 
-ZKP2P is the only payment protocol where agents can transact without KYC. No identity verification. No bank account. Just a wallet on Base.
+Peer is the only payment protocol where agents can transact without KYC. No identity verification. No bank account. Just a wallet on Base.
 
 | Capability | Status | Skill |
 |-----------|:------:|-------|
-| Provide USDC liquidity, earn fees | Ready | `zkp2p-lp` |
-| Accept fiat payments as USDC | Ready | `zkp2p-checkout` |
-| Create & manage rate vaults | Ready (staging) | `zkp2p-vault` |
-| Query market intelligence | Ready | `zkp2p-market` |
-| Optimize vault rates with LLM | Ready | `zkp2p-rate-optimizer` |
-| On-ramp fiat to USDC (Wise: fully autonomous) | Ready | `zkp2p-onramp` |
-| Off-ramp USDC to fiat | Partial | `zkp2p-offramp` |
-| Agent-to-agent USDC transfer | Ready | `zkp2p-transfer` |
+| Provide USDC liquidity, earn fees | Ready | `peer-lp` |
+| Accept fiat payments as USDC | Ready | `peer-checkout` |
+| Create & manage rate vaults | Ready (staging) | `peer-vault` |
+| Query market intelligence | Ready | `peer-market` |
+| Optimize vault rates with LLM | Ready | `peer-rate-optimizer` |
+| On-ramp fiat to USDC (Wise: fully autonomous) | Ready | `peer-onramp` |
+| Off-ramp USDC to fiat | Partial | `peer-offramp` |
+| Agent-to-agent USDC transfer | Ready | `peer-transfer` |
 
 ## Quick Start
 
@@ -26,20 +26,20 @@ ZKP2P is the only payment protocol where agents can transact without KYC. No ide
 Copy any skill directory into your project:
 
 ```bash
-cp -r skills/zkp2p-lp .claude/skills/zkp2p-lp
+cp -r skills/peer-lp .claude/skills/peer-lp
 ```
 
 Or into your personal skills directory for all projects:
 
 ```bash
-cp -r skills/zkp2p-lp ~/.claude/skills/zkp2p-lp
+cp -r skills/peer-lp ~/.claude/skills/peer-lp
 ```
 
 ### Install a skill (OpenClaw / ClawHub)
 
 ```bash
 # Coming soon — once published to ClawHub
-npx clawhub@latest install zkp2p-lp
+npx clawhub@latest install peer-lp
 ```
 
 ### Use a skill
@@ -47,16 +47,16 @@ npx clawhub@latest install zkp2p-lp
 Once installed, skills are automatically triggered when your request matches the skill description. You can also invoke them directly:
 
 ```
-/zkp2p-lp
-/zkp2p-vault
-/zkp2p-checkout
+/peer-lp
+/peer-vault
+/peer-checkout
 ```
 
 ## Skill Catalog
 
-### zkp2p-lp — LP Deposit Management
+### peer-lp — LP Deposit Management
 
-Manage USDC liquidity deposits on ZKP2P. Create deposits, add/remove funds, set conversion rates, monitor intents, and earn fees from fiat-to-crypto exchanges.
+Manage USDC liquidity deposits on Peer. Create deposits, add/remove funds, set conversion rates, monitor intents, and earn fees from fiat-to-crypto exchanges.
 
 **Key operations:**
 - `createDeposit()` — deposit USDC with configurable rates and payment methods
@@ -69,9 +69,9 @@ Manage USDC liquidity deposits on ZKP2P. Create deposits, add/remove funds, set 
 
 ---
 
-### zkp2p-vault — Vault (DRM) Operator
+### peer-vault — Vault (DRM) Operator
 
-Create and manage ZKP2P vaults (Delegated Rate Management). Set rates across pooled LP deposits, earn fees on fulfilled intents.
+Create and manage Peer vaults (Delegated Rate Management). Set rates across pooled LP deposits, earn fees on fulfilled intents.
 
 **Key operations:**
 - `createRateManager()` — create a new vault with fee structure
@@ -84,9 +84,9 @@ Create and manage ZKP2P vaults (Delegated Rate Management). Set rates across poo
 
 ---
 
-### zkp2p-checkout — Pay Checkout
+### peer-checkout — Pay Checkout
 
-Generate ZKP2P Pay checkout links for receiving fiat payments as USDC. Send payment links to users via any channel (Telegram, WhatsApp, Discord).
+Generate Peer Pay checkout links for receiving fiat payments as USDC. Send payment links to users via any channel (Telegram, WhatsApp, Discord).
 
 **Key operations:**
 - `createCheckoutSession()` — generate a checkout URL
@@ -97,9 +97,9 @@ Generate ZKP2P Pay checkout links for receiving fiat payments as USDC. Send paym
 
 ---
 
-### zkp2p-market — Market Intelligence
+### peer-market — Market Intelligence
 
-Query ZKP2P market data — spreads, volume, liquidity depth, LP rankings, and orderbook data via Peerlytics API and protocol indexer.
+Query Peer market data — spreads, volume, liquidity depth, LP rankings, and orderbook data via Peerlytics API and protocol indexer.
 
 **Data sources:**
 - **Peerlytics API** — market analytics with x402 pay-per-request access
@@ -108,7 +108,7 @@ Query ZKP2P market data — spreads, volume, liquidity depth, LP rankings, and o
 
 ---
 
-### zkp2p-rate-optimizer — Rate Optimization
+### peer-rate-optimizer — Rate Optimization
 
 LLM-powered rate optimization for vault operators and LPs. Analyzes market spreads, volume trends, and PnL feedback to recommend rate adjustments.
 
@@ -122,7 +122,7 @@ LLM-powered rate optimization for vault operators and LPs. Analyzes market sprea
 
 ---
 
-### zkp2p-onramp — Fiat to USDC On-Ramp
+### peer-onramp — Fiat to USDC On-Ramp
 
 Agent autonomous on-ramp: send fiat payment, generate headless Reclaim proof, receive USDC on Base. Uses `@reclaimprotocol/attestor-core` for proof generation — the same library the PeerAuth browser extension uses, running headlessly in Node.js.
 
@@ -140,7 +140,7 @@ Agent autonomous on-ramp: send fiat payment, generate headless Reclaim proof, re
 
 ---
 
-### zkp2p-offramp — USDC to Fiat Off-Ramp
+### peer-offramp — USDC to Fiat Off-Ramp
 
 Pay humans in their local fiat currency. Agent signals intent to sell USDC, LP sends fiat to recipient, LP proves payment, USDC transfers to LP.
 
@@ -150,7 +150,7 @@ Pay humans in their local fiat currency. Agent signals intent to sell USDC, LP s
 
 ---
 
-### zkp2p-transfer — Agent-to-Agent USDC Transfer
+### peer-transfer — Agent-to-Agent USDC Transfer
 
 Direct USDC transfer on Base for agent-to-agent payments. No escrow, no proof — pure on-chain ERC-20 transfer via viem.
 
@@ -161,27 +161,27 @@ zkp2p-skills/
 ├── README.md
 ├── LICENSE
 ├── skills/
-│   ├── zkp2p-lp/
+│   ├── peer-lp/
 │   │   ├── SKILL.md
 │   │   └── references/sdk-api.md
-│   ├── zkp2p-vault/
+│   ├── peer-vault/
 │   │   ├── SKILL.md
 │   │   └── references/vault-contracts.md
-│   ├── zkp2p-checkout/
+│   ├── peer-checkout/
 │   │   ├── SKILL.md
 │   │   └── references/pay-api.md
-│   ├── zkp2p-market/
+│   ├── peer-market/
 │   │   ├── SKILL.md
 │   │   └── references/data-sources.md
-│   ├── zkp2p-rate-optimizer/
+│   ├── peer-rate-optimizer/
 │   │   ├── SKILL.md
 │   │   └── scripts/optimize.py
-│   ├── zkp2p-onramp/
+│   ├── peer-onramp/
 │   │   ├── SKILL.md
 │   │   └── references/proof-flow.md
-│   ├── zkp2p-offramp/
+│   ├── peer-offramp/
 │   │   └── SKILL.md
-│   └── zkp2p-transfer/
+│   └── peer-transfer/
 │       └── SKILL.md
 └── shared/
     └── references/
@@ -192,7 +192,7 @@ zkp2p-skills/
 
 ## Protocol Overview
 
-ZKP2P is a permissionless fiat-to-crypto exchange protocol on Base. It uses an escrow + intent system:
+Peer (ZKP2P) is a permissionless fiat-to-crypto exchange protocol on Base. It uses an escrow + intent system:
 
 1. **LPs** deposit USDC into the escrow contract with configured rates and accepted payment methods
 2. **Buyers** signal an intent (locking LP's USDC) and send fiat off-chain
@@ -239,7 +239,7 @@ Skills may require some or all of these:
 | `WISE_API_TOKEN` | On-ramp (Wise) | Wise personal API token |
 | `VENMO_COOKIES` | On-ramp (Venmo) | Venmo session cookies |
 | `PEERLYTICS_API_KEY` | Market intelligence | Peerlytics API key (or use x402) |
-| `PAY_API_KEY` | Checkout | ZKP2P Pay merchant API key |
+| `PAY_API_KEY` | Checkout | Peer Pay merchant API key |
 
 ## Publishing to ClawHub
 
@@ -251,14 +251,14 @@ npm install -g clawhub
 clawhub login
 
 # Publish a skill
-clawhub publish skills/zkp2p-lp --slug zkp2p-lp
-clawhub publish skills/zkp2p-vault --slug zkp2p-vault
-clawhub publish skills/zkp2p-checkout --slug zkp2p-checkout
-clawhub publish skills/zkp2p-market --slug zkp2p-market
-clawhub publish skills/zkp2p-rate-optimizer --slug zkp2p-rate-optimizer
-clawhub publish skills/zkp2p-onramp --slug zkp2p-onramp
-clawhub publish skills/zkp2p-offramp --slug zkp2p-offramp
-clawhub publish skills/zkp2p-transfer --slug zkp2p-transfer
+clawhub publish skills/peer-lp --slug peer-lp
+clawhub publish skills/peer-vault --slug peer-vault
+clawhub publish skills/peer-checkout --slug peer-checkout
+clawhub publish skills/peer-market --slug peer-market
+clawhub publish skills/peer-rate-optimizer --slug peer-rate-optimizer
+clawhub publish skills/peer-onramp --slug peer-onramp
+clawhub publish skills/peer-offramp --slug peer-offramp
+clawhub publish skills/peer-transfer --slug peer-transfer
 ```
 
 ## Contributing

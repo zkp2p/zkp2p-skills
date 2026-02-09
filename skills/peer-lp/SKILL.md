@@ -1,5 +1,5 @@
 ---
-name: zkp2p-lp
+name: peer-lp
 description: Manage USDC liquidity deposits on ZKP2P protocol (Base chain). Create deposits, add/remove funds, set conversion rates, monitor intents, and earn fees from fiat-to-crypto exchanges. Use when the user wants to provide liquidity, manage LP positions, or earn yield on ZKP2P.
 ---
 

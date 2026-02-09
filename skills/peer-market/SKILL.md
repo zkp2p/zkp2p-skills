@@ -1,5 +1,5 @@
 ---
-name: zkp2p-market
+name: peer-market
 description: Query ZKP2P market intelligence — spreads, volume, liquidity, LP performance, and orderbook data via Peerlytics API and protocol indexer. Use when the user wants market data, spread analysis, volume trends, LP rankings, or protocol analytics from ZKP2P.
 ---
 

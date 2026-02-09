@@ -1,5 +1,5 @@
 ---
-name: zkp2p-onramp
+name: peer-onramp
 description: On-ramp fiat to USDC via ZKP2P protocol. Agent sends fiat payment, generates headless Reclaim proof, and receives USDC on Base. Use when the user or agent needs to convert fiat (Venmo, Wise, Revolut) to USDC, buy crypto, or replenish on-chain balance.
 ---
 
