@@ -51,7 +51,7 @@ Start with **Wise** for fully autonomous operation. Use **Venmo** with pre-expor
 ## Quick Example
 
 ```typescript
-import { OfframpClient } from '@zkp2p/offramp-sdk';
+import { OfframpClient } from '@zkp2p/sdk';
 
 const client = new OfframpClient({
   walletClient,
@@ -110,6 +110,12 @@ See the **`peer-onramp`** skill for the complete 6-step flow:
 - On-chain intent fulfillment via `fulfillIntent()`
 - Wise two-proof flow (transfer list + delivery confirmation)
 - Agent operation modes (fully autonomous, semi-autonomous, human-pays-agent-proves)
+
+## Taker Tiers and Intent Caps
+
+Per-intent caps depend on the taker's history. New addresses start small (~$50) and graduate to higher caps as they complete successful intents. Caps also vary by platform risk level -- Wise/Revolut have higher caps than CashApp/Zelle.
+
+See the **`peer-onramp`** skill for the full tier system (PEASANT through PEER_PRESIDENT), lockScore mechanics, and how to check your current tier via the Peerlytics API.
 
 ## Environment Variables
 

@@ -49,19 +49,23 @@ The agent receives webhook notifications at each stage: payment started, proof g
 ## Quick Example
 
 ```typescript
-import { createCheckoutSession } from '@zkp2p-pay/sdk';
-
-const session = await createCheckoutSession({
-  merchantId: process.env.MERCHANT_ID,
-  amountUsdc: '50.00',
-  destinationChainId: 8453,                                    // Base
-  destinationToken: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', // USDC
-  recipientAddress: AGENT_WALLET,
-  metadata: { invoiceId: 'inv_001', service: 'content-gen' }
-}, {
-  apiBaseUrl: 'https://api.pay.zkp2p.xyz',
-  apiKey: process.env.PAY_API_KEY
+const response = await fetch('https://api.pay.zkp2p.xyz/v1/checkout/session', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': process.env.PAY_API_KEY!,
+  },
+  body: JSON.stringify({
+    merchantId: process.env.MERCHANT_ID,
+    amountUsdc: '50.00',
+    destinationChainId: 8453,                                    // Base
+    destinationToken: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', // USDC
+    recipientAddress: AGENT_WALLET,
+    metadata: { invoiceId: 'inv_001', service: 'content-gen' },
+  }),
 });
+
+const session = await response.json();
 
 // Send session.checkoutUrl to the human payer
 // Track via session.orderId

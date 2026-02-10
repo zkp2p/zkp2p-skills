@@ -46,7 +46,7 @@ Result: the human gets fiat, the agent's USDC covers it. The agent never touches
 ## Quick Example
 
 ```typescript
-import { OfframpClient } from '@zkp2p/offramp-sdk';
+import { OfframpClient } from '@zkp2p/sdk';
 
 const client = new OfframpClient({
   walletClient,           // viem wallet on Base

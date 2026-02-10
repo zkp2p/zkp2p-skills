@@ -13,32 +13,32 @@ The payer completes payment on their chosen platform, generates a zkTLS proof vi
 
 ## Setup
 
-1. Install the Pay SDK:
+1. Register a merchant account at `merchant.pay.zkp2p.xyz` to obtain your `merchantId` and API key.
 
-```bash
-npm install @zkp2p-pay/sdk
-```
-
-2. Register a merchant account at `merchant.pay.zkp2p.xyz` to obtain your `merchantId` and API key.
-
-3. Configure your webhook endpoint URL in the merchant dashboard.
+2. Configure your webhook endpoint URL in the merchant dashboard.
 
 ## Create Checkout Session
 
 ```typescript
-import { createCheckoutSession } from '@zkp2p-pay/sdk';
+const API_BASE = 'https://api.pay.zkp2p.xyz';
 
-const session = await createCheckoutSession({
-  merchantId: 'your_merchant_id',
-  amountUsdc: '25.00',
-  destinationChainId: 8453,
-  destinationToken: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-  recipientAddress: AGENT_WALLET,
-  metadata: { serviceId: 'task_123' }
-}, {
-  apiBaseUrl: 'https://api.pay.zkp2p.xyz',
-  apiKey: 'YOUR_API_KEY'
+const response = await fetch(`${API_BASE}/v1/checkout/session`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': process.env.ZKP2P_PAY_API_KEY!,
+  },
+  body: JSON.stringify({
+    merchantId: 'your_merchant_id',
+    amountUsdc: '25.00',
+    destinationChainId: 8453,
+    destinationToken: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+    recipientAddress: AGENT_WALLET,
+    metadata: { serviceId: 'task_123' },
+  }),
 });
+
+const session = await response.json();
 
 // session.checkoutUrl   -- send this to the payer
 // session.orderId       -- use for tracking
@@ -161,12 +161,14 @@ The `WEBHOOK_SECRET` is provided during merchant registration.
 You can either rely on webhooks (recommended) or poll the order status:
 
 ```typescript
-import { getOrderStatus } from '@zkp2p-pay/sdk';
+const statusResponse = await fetch(
+  `${API_BASE}/v1/checkout/session/${session.orderId}`,
+  {
+    headers: { 'x-api-key': process.env.ZKP2P_PAY_API_KEY! },
+  },
+);
 
-const status = await getOrderStatus(session.orderId, {
-  apiBaseUrl: 'https://api.pay.zkp2p.xyz',
-  apiKey: 'YOUR_API_KEY'
-});
+const status = await statusResponse.json();
 
 // status.state -- current order state
 // status.transactionHash -- on-chain tx hash (when fulfilled)

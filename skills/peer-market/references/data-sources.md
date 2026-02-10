@@ -2,188 +2,306 @@
 
 ## Peerlytics API Endpoints
 
-Base URL: `https://api.peerlytics.xyz`
+Base URL: `https://peerlytics.xyz`
+
+SDK class: `Peerlytics` from `@peerlytics/sdk`
 
 ### Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/v1/spreads` | Current conversion rate spreads by platform and currency |
-| GET | `/v1/volume` | Historical volume with time granularity |
-| GET | `/v1/leaderboard/makers` | LP leaderboard by volume, fill rate |
-| GET | `/v1/leaderboard/takers` | Taker leaderboard by volume |
-| GET | `/v1/orderbook` | Live orderbook (available deposits with rates) |
-| GET | `/v1/entity/address/{address}` | Address lookup: deposits, intents, stats |
-| GET | `/v1/entity/intent/{intentHash}` | Intent lookup: details, fulfillment status |
-| GET | `/v1/entity/deposit/{depositId}` | Deposit lookup: config, balance, history |
-| GET | `/v1/entity/tx/{txHash}` | Transaction lookup with USD context |
-| GET | `/v1/protocol/stats` | Aggregate protocol metrics |
-| GET | `/v1/protocol/events` | Live contract event stream |
+| Method | Endpoint | SDK Method | Description |
+|--------|----------|-----------|-------------|
+| GET | `/api/v1/analytics/summary` | `getSummary()` | Aggregate protocol metrics (volume, trades, liquidity, spreads) |
+| GET | `/api/v1/analytics/period?range=mtd\|3mtd\|ytd\|all` | `getPeriod(range)` | Volume and metrics for a time range |
+| GET | `/api/v1/analytics/chunk?range=...&chunk=daily\|hourly\|flows\|deposits` | `getChunk(range, chunk)` | Granular time-series data |
+| GET | `/api/v1/analytics/leaderboard` | `getLeaderboard(params)` | Maker and taker leaderboards (by volume, APR, profit, lock score) |
+| GET | `/api/v1/analytics/attribution` | `getAttribution()` | Attribution analytics |
+| GET | `/api/v1/market/summary` | `getMarketSummary(opts)` | Market spread data by platform/currency (MarketEntry[]) |
+| GET | `/api/v1/orderbook` | `getOrderbook(opts)` | Rate-level aggregated orderbook with stats and activity |
+| GET | `/api/v1/deposits` | `getDeposits(filters)` | Filtered deposit list with enriched data |
+| GET | `/api/v1/intents` | `getIntents(filters)` | Filtered intent list with enriched data |
+| GET | `/api/v1/activity` | `getActivity(filters)` | Live contract event stream (LiveEvent[]) |
+| GET | `/api/v1/explorer/deposit/{id}` | `getDeposit(id)` | Deposit detail with linked payment details |
+| GET | `/api/v1/explorer/intent/{hash}` | `getIntent(hash)` | Intent detail with linked data |
+| GET | `/api/v1/explorer/address/{address}` | `getAddress(address)` | Address lookup: deposits, intents, stats |
+| GET | `/api/v1/explorer/maker/{address}` | `getMaker(address)` | Maker portfolio: summary, deposits, allocations |
+| GET | `/api/v1/explorer/verifier/{address}` | `getVerifier(address)` | Verifier stats and breakdown |
+| GET | `/api/v1/explorer/search` | `search(query, opts)` | Universal search (address, hash, deposit ID) |
+| GET | `/api/v1/meta/currencies` | `getCurrencies()` | Supported currencies with hashes |
+| GET | `/api/v1/meta/platforms` | `getPlatforms()` | Supported platforms with method hashes |
+| GET | `/api/v1/makers/{address}/history` | `getMakerHistory(address)` | Maker deposit and intent history |
+| GET | `/api/v1/takers/{address}/history` | `getTakerHistory(address)` | Taker intent history and lock score |
 
 ### Authentication Headers
 
 | Header | Method | Value |
 |--------|--------|-------|
-| `x-api-key` | API Key | Your API key string |
+| `X-API-Key` | API Key | Your API key string |
 | `X-Payment-Proof` | x402 | Transaction hash of USDC payment on Base |
 
 ---
 
 ### Response Schemas
 
-#### GET /v1/spreads
+#### GET /api/v1/market/summary
 
-Query params: `paymentPlatforms` (comma-separated), `fiatCurrencies` (comma-separated)
+Query params: `platform` (comma-separated), `currency` (comma-separated), `includeRates` (boolean), `limit`, `offset`
 
 ```typescript
-interface SpreadsResponse {
-  [platform: string]: {
-    [currency: string]: {
-      min: number;          // Lowest conversion rate (tightest spread)
-      max: number;          // Highest conversion rate (widest spread)
-      median: number;       // Median rate across active deposits
-      mean: number;         // Mean rate
-      stddev: number;       // Standard deviation
-      count: number;        // Number of active deposits at this pair
-      totalLiquidity: string; // Sum of available USDC at this pair
-    }
-  }
+interface MarketSummaryData {
+  updatedAt: string;
+  computedBy: string;
+  version: number;
+  markets: MarketEntry[];
+  count: number;
+  hasMore: boolean;
+  limit: number;
+  offset: number;
+  filters: Record<string, unknown>;
+}
+
+interface MarketEntry {
+  platform: string;
+  currency: string;
+  sampleSize: number;
+  totalLiquidity: number;
+  p25: number | null;        // 25th percentile rate
+  median: number | null;     // Median rate
+  p75: number | null;        // 75th percentile rate
+  p90: number | null;        // 90th percentile rate
+  suggestedRate: number | null;
+  rateEntries?: Array<{ rate: number; liquidity: number }>;
 }
 ```
 
-#### GET /v1/volume
+#### GET /api/v1/analytics/period
 
-Query params: `paymentPlatforms`, `fiatCurrency`, `period` (`1d`|`7d`|`30d`|`90d`), `granularity` (`hourly`|`daily`|`weekly`)
+Query params: `range` (`mtd`|`3mtd`|`ytd`|`all`)
 
 ```typescript
-interface VolumeResponse {
-  totalUsdc: string;         // Total USDC volume in period
-  totalTxns: number;         // Total transaction count
-  dataPoints: Array<{
-    date: string;            // ISO 8601 date or hour
-    volumeUsdc: string;      // Volume for this interval
-    txCount: number;         // Transaction count for this interval
-    avgSpreadBps: number;    // Average spread in basis points
-  }>;
-  platforms: {
-    [platform: string]: {
-      volumeUsdc: string;
-      txCount: number;
-      percentage: number;    // Share of total volume
-    }
-  };
+interface PeriodData {
+  [key: string]: unknown;
+  meta: CachedMeta & { range: string };
+}
+
+interface CachedMeta {
+  cached_at: string;
+  cache_duration_seconds: number;
+  source: string;
+  range?: string;
+  message?: string;
 }
 ```
 
-#### GET /v1/leaderboard/makers
-
-Query params: `period` (`7d`|`30d`|`90d`|`all`), `limit` (1-100), `sortBy` (`volume`|`fillRate`|`txCount`)
-
-```typescript
-interface MakerLeaderboardResponse {
-  makers: Array<{
-    rank: number;
-    address: string;
-    volumeUsdc: string;        // Total USDC filled
-    fillRate: number;          // Ratio of fulfilled vs expired intents (0-1)
-    avgSpreadBps: number;      // Average spread in basis points
-    activeDeposits: number;    // Current number of active deposits
-    platforms: string[];       // Payment platforms used
-    currencies: string[];      // Fiat currencies supported
-    avgFillTimeSeconds: number; // Average time to fulfill an intent
-  }>;
-  totalMakers: number;
-  period: string;
-}
-```
-
-#### GET /v1/orderbook
-
-Query params: `paymentPlatform`, `fiatCurrency`, `limit` (1-100), `minAmount`, `maxAmount`
-
-```typescript
-interface OrderbookResponse {
-  bids: Array<{
-    depositId: string;
-    maker: string;
-    availableUsdc: string;
-    conversionRate: string;      // 18-decimal precision
-    effectiveConversionRate: string; // Fee-adjusted rate (if vault-managed)
-    spreadBps: number;
-    paymentMethods: string[];
-    fiatCurrencies: string[];
-    intentRange: {
-      min: string;
-      max: string;
-    };
-    rateManagerId: string | null; // Vault ID if delegated
-    managerFee: string | null;    // Vault fee if delegated
-  }>;
-  lastUpdated: string;           // ISO 8601
-  totalLiquidity: string;        // Sum of all available USDC
-  depositCount: number;
-}
-```
-
-#### GET /v1/protocol/stats
+#### GET /api/v1/analytics/summary
 
 No query params required.
 
 ```typescript
-interface ProtocolStatsResponse {
-  totalVolumeUsdc: string;        // All-time volume
-  totalTransactions: number;       // All-time fulfilled intents
-  activeMakers: number;            // Unique addresses with active deposits
-  activeTakers: number;            // Unique addresses with recent intents (30d)
-  totalLiquidityUsdc: string;      // Current available USDC across all deposits
-  activeDeposits: number;          // Deposits currently accepting intents
-  volume24h: string;               // Last 24 hours
-  volume7d: string;                // Last 7 days
-  volume30d: string;               // Last 30 days
-  platformBreakdown: {
-    [platform: string]: {
-      volumeUsdc: string;
-      percentage: number;
-    }
+interface AnalyticsSummary {
+  timestamp: string;
+  periods: Record<'mtd' | '3mtd' | 'ytd', {
+    range: { start: string; end: string; days: number };
+    metrics: {
+      volume: number;
+      trades: number;
+      intents: number;
+      fulfilled: number;
+      successRate: number;
+      uniqueUsers: number;
+      totalEvents: number;
+    };
+    avgHourlyVolume?: number;
+    avgDailyVolume?: number;
+  }>;
+  liquidity: {
+    available: number;
+    activeDeposits: number;
   };
-  currencyBreakdown: {
-    [currency: string]: {
-      volumeUsdc: string;
-      percentage: number;
-    }
+  spreads: {
+    current_spread_bps: number;
+    min_spread_bps: number;
+    max_spread_bps: number;
+  } | null;
+  changes: {
+    volume: {
+      mtd_vs_prior_month: number | null;
+      qtd_vs_prior_quarter: number | null;
+      ytd_vs_prior_year: number | null;
+    };
+    users: {
+      mtd_vs_prior_month: number | null;
+      qtd_vs_prior_quarter: number | null;
+      ytd_vs_prior_year: number | null;
+    };
   };
+  topCurrencies: Array<{
+    currency: string;
+    display?: string;
+    volume: number;
+    trades: number;
+    avg_rate: string | null;
+  }>;
+  meta: CachedMeta;
 }
 ```
 
-#### GET /v1/entity/address/{address}
+#### GET /api/v1/analytics/leaderboard
+
+Query params: `limit`, `offset`
 
 ```typescript
-interface AddressEntityResponse {
+interface LeaderboardData {
+  makers: {
+    byVolume: MakerLeaderboardEntry[];
+    byAPR: MakerLeaderboardEntry[];
+    byProfit: MakerLeaderboardEntry[];
+  };
+  takers: {
+    byVolume: TakerLeaderboardEntry[];
+    byLockScore: TakerLeaderboardEntry[];
+    byActivity: TakerLeaderboardEntry[];
+  };
+  meta: CachedMeta & { source: string };
+}
+
+interface MakerLeaderboardEntry {
+  rank: number;
   address: string;
-  isMaker: boolean;
-  isTaker: boolean;
-  makerStats: {
-    totalVolumeUsdc: string;
-    activeDeposits: number;
-    totalDeposits: number;
-    fulfilledIntents: number;
-    avgFillRate: number;
-    avgSpreadBps: number;
-    platforms: string[];
-    currencies: string[];
-  } | null;
-  takerStats: {
-    totalVolumeUsdc: string;
-    totalIntents: number;
-    fulfilledIntents: number;
-    cancelledIntents: number;
-    expiredIntents: number;
-  } | null;
-  recentActivity: Array<{
-    type: 'deposit' | 'intent' | 'fulfillment';
-    timestamp: string;
-    details: Record<string, unknown>;
+  addressShort: string;
+  volumeUsd: number;
+  grossDepositedUsd: number;
+  activeDeposits: number;
+  fulfilledIntents: number;
+  successRatePct: number;
+  realizedProfitUsd: number;
+  realizedPnlPct: number | null;
+  aprPct: number | null;
+  updatedAt: string;
+}
+
+interface TakerLeaderboardEntry {
+  rank: number;
+  address: string;
+  addressShort: string;
+  volumeUsd: number;
+  signalCount: number;
+  fulfillCount: number;
+  pruneCount: number;
+  successRatePct: number;
+  trustScore: number;
+  tier: string;
+  tierCap: number;
+  firstSeenAt: string | null;
+  updatedAt: string;
+}
+```
+
+#### GET /api/v1/orderbook
+
+Query params: `currency`, `platform`, `minSize`
+
+```typescript
+// Orderbook is rate-level aggregated, NOT individual deposits
+interface OrderbookData {
+  stats: OrderbookStats;
+  orderbooks: OrderbookCurrency[];
+  activity: Array<{
+    id: string;
+    type: 'signal' | 'fulfill' | 'prune';
+    amountUsd: number;
+    currency: string;
+    platform: string;
+    timestamp: number;
   }>;
+  filters: {
+    applied: { currency: string | null; platform: string | null; minSize: number | null };
+    available: { currencies: string[]; platforms: string[] };
+  };
+}
+
+interface OrderbookStats {
+  totalLiquidityUsd: number;
+  activeMakers: number;
+  volume24hUsd: number;
+  activeIntents: number;
+}
+
+interface OrderbookCurrency {
+  currency: string;
+  levels: OrderbookLevel[];
+  totalLiquidityUsd: number;
+  bestRate: number;
+  fxMidRate: number | null;
+}
+
+interface OrderbookLevel {
+  rate: number;
+  totalLiquidityUsd: number;
+  depositCount: number;
+  platforms: string[];
+  topDeposit: { depositor: string; depositId: string };
+}
+
+interface OrderbookMeta {
+  escrow: string;
+  chainId: number;
+  activityWindow: string;
+  maxLevels: number;
+  timestamp: string;
+}
+```
+
+#### GET /api/v1/activity
+
+Query params: `type` (comma-separated), `intentHash`, `depositId`, `address`, `owner`, `depositor`, `recipient`, `since`, `limit`, `offset`
+
+```typescript
+type EventType =
+  | 'intent_signaled' | 'intent_fulfilled' | 'intent_pruned'
+  | 'deposit_created' | 'deposit_topup' | 'deposit_withdrawn'
+  | 'deposit_closed' | 'deposit_rate_updated';
+
+interface LiveEvent {
+  id: string;
+  type: EventType;
+  chainId: number;
+  blockNumber: number;
+  logIndex: number;
+  timestamp: string;
+  intentHash?: string;
+  depositId?: string;
+  owner?: string;
+  toAddress?: string;
+  depositor?: string;
+  amount?: string;
+  amountUsd?: number;
+  platform?: string | null;
+  currency?: string;
+  conversionRate?: string;
+  exchangeRate?: number;
+}
+```
+
+#### GET /api/v1/explorer/address/{address}
+
+```typescript
+// Returns intents, deposits, linked activity, and aggregate stats
+interface AddressResponse {
+  intents: IntentEntity[];
+  deposits: DepositEntity[];
+  linked: { activity: AddressActivity };
+  stats: AddressStats;
+}
+
+interface AddressStats {
+  intents_total: number;
+  intents_fulfilled: number;
+  intents_pruned: number;
+  deposits_total: number;
+  volume_total_usd: number;
+  volume_as_taker_usd: number;
+  volume_as_recipient_usd: number;
+  volume_as_maker_usd: number;
 }
 ```
 
@@ -532,7 +650,7 @@ query ExpiredIntents($depositor: String!, $now: BigInt!) {
 ```
 Agent                          Peerlytics API                     Base Chain
   |                                 |                                |
-  |-- GET /v1/spreads ------------->|                                |
+  |-- GET /api/v1/market/summary -->|                                |
   |                                 |                                |
   |<-- HTTP 402 + Payment Details --|                                |
   |    { amount: "0.001",           |                                |
@@ -544,12 +662,12 @@ Agent                          Peerlytics API                     Base Chain
   |                                 |                                |
   |<-- tx hash confirmation --------|<----- tx confirmed -----------|
   |                                 |                                |
-  |-- GET /v1/spreads ------------->|                                |
+  |-- GET /api/v1/market/summary -->|                                |
   |    X-Payment-Proof: 0xtxhash   |                                |
   |                                 |-- validate tx on-chain ------>|
   |                                 |<-- confirmed -----------------|
   |                                 |                                |
-  |<-- 200 OK + spreads data ------|                                |
+  |<-- 200 OK + market data -------|                                |
   |                                 |                                |
 ```
 

@@ -27,11 +27,11 @@ npm install @peerlytics/sdk
 ### Access via API Key
 
 ```typescript
-import { PeerlyticsClient } from '@peerlytics/sdk';
+import { Peerlytics } from '@peerlytics/sdk';
 
-const client = new PeerlyticsClient({
+const client = new Peerlytics({
   apiKey: 'YOUR_API_KEY',
-  baseUrl: 'https://api.peerlytics.xyz'
+  // baseUrl defaults to 'https://peerlytics.xyz'
 });
 ```
 
@@ -39,95 +39,106 @@ const client = new PeerlyticsClient({
 
 The x402 model lets agents pay per request with USDC on Base -- no registration, no API key provisioning.
 
-```typescript
-import { PeerlyticsClient } from '@peerlytics/sdk';
-
-const client = new PeerlyticsClient({
-  x402: {
-    walletClient,  // viem WalletClient with USDC on Base
-    chainId: 8453
-  },
-  baseUrl: 'https://api.peerlytics.xyz'
-});
-```
+1. Agent makes API request without authentication
+2. Server responds with HTTP 402 + payment requirements (USDC amount, Base recipient address)
+3. Agent sends USDC microtransaction on Base
+4. Agent retries request with `X-Payment-Proof` header containing the tx hash
+5. Server validates the on-chain payment and returns data
 
 Cost per query: ~$0.001-0.01 USDC depending on endpoint complexity.
 
-## Market Spreads
+## Market Summary (Spreads)
 
-Query current conversion rate spreads by payment platform and currency:
+Query current market spread data by platform and currency:
 
 ```typescript
-const spreads = await client.getSpreads({
-  paymentPlatforms: ['venmo', 'wise', 'revolut'],
-  fiatCurrencies: ['USD', 'EUR'],
+const market = await client.getMarketSummary({
+  platform: ['venmo', 'wise', 'revolut'],
+  currency: ['USD', 'EUR'],
 });
 
-// spreads.venmo.USD -> { min: 1.005, max: 1.035, median: 1.018, count: 42 }
-// spreads.wise.EUR -> { min: 1.002, max: 1.028, median: 1.012, count: 67 }
+// market.markets -> MarketEntry[] with spread percentiles per platform/currency
+// market.markets[0] -> {
+//   platform: 'venmo', currency: 'USD',
+//   sampleSize: 42, totalLiquidity: 125000,
+//   p25: 1.005, median: 1.018, p75: 1.025, p90: 1.035,
+//   suggestedRate: 1.015
+// }
 ```
 
-Spread values are conversion rates in 18-decimal precision. A rate of `1.02` means $1.02 fiat per $1.00 USDC -- the 2% is the LP's spread.
+A rate of `1.02` means $1.02 fiat per $1.00 USDC -- the 2% is the LP's spread.
 
-## Volume Trends
+## Analytics Period (Volume Trends)
 
-Query historical volume by platform, currency, and time period:
+Query volume and metrics for a time range:
 
 ```typescript
-const volume = await client.getVolume({
-  paymentPlatforms: ['venmo'],
-  fiatCurrency: 'USD',
-  period: '7d',            // '1d', '7d', '30d', '90d'
-  granularity: 'daily'     // 'hourly', 'daily', 'weekly'
-});
+const period = await client.getPeriod('mtd'); // 'mtd' | '3mtd' | 'ytd' | 'all'
 
-// volume.dataPoints -> [{ date: '2026-02-03', volumeUsdc: '125430.00', txCount: 87 }, ...]
-// volume.totalUsdc  -> '892100.00'
-// volume.totalTxns  -> 612
+// period.meta -> { cached_at, cache_duration_seconds, source, range: 'mtd' }
 ```
 
-## LP Rankings
-
-Query maker leaderboard with fill rates and volume:
+For time-series breakdowns (daily, hourly, flows, deposits):
 
 ```typescript
-const leaderboard = await client.getMakerLeaderboard({
-  period: '30d',
-  limit: 20,
-  sortBy: 'volume'     // 'volume', 'fillRate', 'txCount'
-});
+const daily = await client.getChunk('mtd', 'daily');
+// daily.data -> time-series array
+// daily.range -> 'mtd'
+// daily.chunk -> 'daily'
+```
 
-// leaderboard[0] -> {
-//   address: '0xabc...',
-//   volumeUsdc: '450000.00',
-//   fillRate: 0.97,
-//   avgSpreadBps: 180,
-//   activeDeposits: 3,
-//   platforms: ['venmo', 'wise'],
-//   currencies: ['USD', 'EUR']
+## LP Rankings (Leaderboard)
+
+Query maker and taker leaderboards:
+
+```typescript
+const leaderboard = await client.getLeaderboard({ limit: 20 });
+
+// Makers ranked by volume, APR, and profit
+// leaderboard.makers.byVolume[0] -> {
+//   rank: 1, address: '0xabc...', addressShort: '0xabc...def',
+//   volumeUsd: 450000, grossDepositedUsd: 500000,
+//   activeDeposits: 3, fulfilledIntents: 120,
+//   successRatePct: 97, realizedProfitUsd: 4500,
+//   realizedPnlPct: 0.9, aprPct: 12.5
+// }
+// leaderboard.makers.byAPR -> sorted by APR
+// leaderboard.makers.byProfit -> sorted by realized profit
+
+// Takers ranked by volume, lock score, and activity
+// leaderboard.takers.byVolume[0] -> {
+//   rank: 1, address: '0xdef...', volumeUsd: 25000,
+//   signalCount: 30, fulfillCount: 28, pruneCount: 2,
+//   successRatePct: 93, trustScore: 850, tier: 'gold', tierCap: 5000
 // }
 ```
 
 ## Orderbook
 
-Live liquidity is available at `orderbook.peerlytics.xyz` (web UI) and via the API:
+Live liquidity is available at `orderbook.peerlytics.xyz` (web UI) and via the API. The orderbook is **rate-level aggregated** (not individual deposits):
 
 ```typescript
 const orderbook = await client.getOrderbook({
-  paymentPlatform: 'venmo',
-  fiatCurrency: 'USD',
-  limit: 50
+  currency: 'USD',
+  platform: 'venmo',
+  minSize: 100,
 });
 
-// orderbook.bids -> [{
-//   depositId: '123',
-//   availableUsdc: '5000.00',
-//   conversionRate: '1.018000000000000000',
-//   spreadBps: 180,
-//   maker: '0xabc...',
-//   paymentMethods: ['venmo'],
-//   intentRange: { min: '10.00', max: '1000.00' }
-// }, ...]
+// orderbook.stats -> { totalLiquidityUsd, activeMakers, volume24hUsd, activeIntents }
+// orderbook.orderbooks -> OrderbookCurrency[] (one per currency)
+// orderbook.orderbooks[0] -> {
+//   currency: 'USD',
+//   bestRate: 1.005,
+//   fxMidRate: 1.0,
+//   totalLiquidityUsd: 125000,
+//   levels: [{
+//     rate: 1.005, totalLiquidityUsd: 50000, depositCount: 8,
+//     platforms: ['venmo', 'wise'],
+//     topDeposit: { depositor: '0xabc...', depositId: '42' }
+//   }, ...]
+// }
+// orderbook.activity -> recent signals, fulfills, prunes
+// orderbook.filters -> applied and available filter options
 ```
 
 ## Indexer Queries
@@ -224,10 +235,10 @@ query VaultPerformance($rateManagerId: String!) {
 
 ## Quote API
 
-Get the best available rate for a given amount and platform combination. Uses the offramp-sdk:
+Get the best available rate for a given amount and platform combination. Uses `@zkp2p/sdk`:
 
 ```typescript
-import { OfframpClient } from '@zkp2p/offramp-sdk';
+import { OfframpClient } from '@zkp2p/sdk';
 
 const client = new OfframpClient({ walletClient, chainId: 8453, runtimeEnv: 'production', apiKey: 'KEY' });
 
@@ -270,7 +281,7 @@ const quote = await client.getQuote({
 | Feature | x402 | API Key |
 |---------|------|---------|
 | Setup | None -- pay with USDC on Base | Register at peerlytics.xyz |
-| Authentication | Payment proof in request header | `x-api-key` header |
+| Authentication | Payment proof in request header | `X-API-Key` header |
 | Cost | Per-request (~$0.001-0.01 USDC) | Tiered subscription |
 | Rate Limits | Based on payment | Based on tier |
 | Best For | Agents, bots, permissionless access | Applications with predictable usage |
@@ -289,32 +300,26 @@ const quote = await client.getQuote({
 
 ```typescript
 // Compare spreads across all platforms for USD
-const spreads = await client.getSpreads({
-  paymentPlatforms: ['venmo', 'cashapp', 'wise', 'revolut', 'paypal', 'zelle'],
-  fiatCurrencies: ['USD'],
-});
+const market = await client.getMarketSummary({ currency: 'USD' });
 
 // Find the platform with the tightest spread (lowest cost for buyers)
-const tightest = Object.entries(spreads)
-  .map(([platform, currencies]) => ({
-    platform,
-    medianSpread: currencies.USD.median
-  }))
-  .sort((a, b) => a.medianSpread - b.medianSpread);
+const tightest = market.markets
+  .filter(m => m.median !== null)
+  .sort((a, b) => (a.median ?? Infinity) - (b.median ?? Infinity));
+
+// tightest[0] -> { platform: 'wise', currency: 'USD', median: 1.005, totalLiquidity: 80000 }
 ```
 
-### Volume Velocity Detection
+### Volume Period Comparison
 
 ```typescript
-// Detect volume acceleration (compare last 24h to prior 7d average)
-const recent = await client.getVolume({ period: '1d' });
-const baseline = await client.getVolume({ period: '7d' });
+// Compare MTD vs YTD summary metrics
+const summary = await client.getSummary();
 
-const dailyAvg = parseFloat(baseline.totalUsdc) / 7;
-const velocity = parseFloat(recent.totalUsdc) / dailyAvg;
-
-// velocity > 1.5 = significant increase
-// velocity < 0.5 = significant decrease
+const mtdVolume = summary.periods.mtd.metrics.volume;
+const ytdVolume = summary.periods.ytd.metrics.volume;
+const volumeChange = summary.changes.volume.mtd_vs_prior_month;
+// volumeChange > 0 = growing, < 0 = declining
 ```
 
 ### Liquidity Depth by Rate Tier
@@ -378,3 +383,12 @@ query VaultBenchmark {
   }
 }
 ```
+
+## Environment
+
+| | Production | Staging |
+|--|-----------|---------|
+| Chain | Base (8453) | Base Sepolia (84532) |
+| Peerlytics API | `https://peerlytics.xyz` | - |
+| Core API | `https://api.zkp2p.xyz` | `https://api-staging.zkp2p.xyz` |
+| Indexer | - | `https://indexer.hyperindex.xyz/00be13d/v1/graphql` |
