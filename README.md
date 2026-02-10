@@ -17,6 +17,9 @@ Peer is the only payment protocol where agents can transact without KYC. No iden
 | Earn fees as a DeFi rate manager | [`earn-as-defi-manager`](#earn-as-defi-manager) | Ready (staging) |
 | Check exchange rates and spreads | [`check-fx-rates`](#check-fx-rates) | Ready |
 | Send USDC to another agent | [`send-usdc`](#send-usdc) | Ready |
+| Analyze protocol health and performance | [`analyze-peer-protocol`](#analyze-peer-protocol) | Ready |
+| Look up deposits, intents, addresses | [`look-up-peer-data`](#look-up-peer-data) | Ready |
+| Monitor real-time protocol events | [`monitor-peer-activity`](#monitor-peer-activity) | Ready |
 
 > **New to Peer?** Start with the action-oriented skills above. They explain what you can do and why. Each one links to a deeper `peer-*` implementation skill with full SDK references and code.
 
@@ -130,6 +133,30 @@ Send USDC to another agent or wallet on Base. Direct ERC-20 transfer, settles in
 
 ---
 
+#### analyze-peer-protocol
+
+Analyze Peer protocol health and performance — volume trends, liquidity depth, spreads, maker/taker leaderboards, and market data. Understand what is happening across the protocol before deploying capital or adjusting strategy.
+
+**Implementation:** `peer-analytics`
+
+---
+
+#### look-up-peer-data
+
+Search and look up specific deposits, intents, addresses, maker portfolios, and verifier stats. Use when you need to inspect a specific entity rather than aggregate analytics.
+
+**Implementation:** `peer-explorer`
+
+---
+
+#### monitor-peer-activity
+
+Watch real-time protocol events — intents signaled, fulfilled, pruned, deposits created. Supports both polling and SSE streaming for continuous monitoring.
+
+**Implementation:** `peer-activity`
+
+---
+
 ### Implementation Skills (Full Reference)
 
 #### peer-lp — LP Deposit Management
@@ -138,7 +165,7 @@ Manage USDC liquidity deposits on Peer. Create deposits, add/remove funds, set c
 
 **Key operations:** `createDeposit()`, `addFunds()` / `removeFunds()`, `setCurrencyMinRate()`, `getIntents()`, `pruneExpiredIntents()`
 
-**SDK:** `@zkp2p/offramp-sdk`
+**SDK:** `@zkp2p/sdk`
 
 ---
 
@@ -156,13 +183,37 @@ Create and manage Peer vaults (Delegated Rate Management). Set rates across pool
 
 Generate Peer Pay checkout links for receiving fiat payments as USDC. Webhook handling for 8 event types (HMAC-SHA256 signed).
 
-**SDK:** `@zkp2p-pay/sdk`
+**API:** REST (`https://api.pay.zkp2p.xyz`)
 
 ---
 
 #### peer-market — Market Intelligence
 
 Query Peer market data — spreads, volume, liquidity depth, LP rankings, and orderbook data via Peerlytics API and protocol indexer.
+
+---
+
+#### peer-analytics — Protocol Analytics
+
+Analyze Peer protocol health — volume, liquidity, spreads, leaderboards, attribution, and market data via the Peerlytics SDK. Covers protocol-level metrics and period comparisons.
+
+**SDK:** `@peerlytics/sdk`
+
+---
+
+#### peer-explorer — Entity Lookup
+
+Search and inspect deposits, intents, addresses, maker portfolios, and verifier stats via Peerlytics explorer API.
+
+**SDK:** `@peerlytics/sdk`
+
+---
+
+#### peer-activity — Real-Time Activity Monitor
+
+Watch protocol events in real time via polling or SSE stream. Event types: `intent_signaled`, `intent_fulfilled`, `intent_pruned`, `deposit_created`, and more.
+
+**SDK:** `@peerlytics/sdk`
 
 ---
 
@@ -211,6 +262,13 @@ zkp2p-skills/
 │   │   └── SKILL.md
 │   ├── send-usdc/
 │   │   └── SKILL.md
+│   ├── analyze-peer-protocol/
+│   │   └── SKILL.md
+│   ├── look-up-peer-data/
+│   │   └── SKILL.md
+│   ├── monitor-peer-activity/
+│   │   └── SKILL.md
+│   │
 │   ├── peer-lp/                   # Implementation skills (full reference)
 │   │   ├── SKILL.md
 │   │   └── references/sdk-api.md
@@ -223,6 +281,14 @@ zkp2p-skills/
 │   ├── peer-market/
 │   │   ├── SKILL.md
 │   │   └── references/data-sources.md
+│   ├── peer-analytics/
+│   │   ├── SKILL.md
+│   │   └── references/analytics-api.md
+│   ├── peer-explorer/
+│   │   ├── SKILL.md
+│   │   └── references/explorer-api.md
+│   ├── peer-activity/
+│   │   └── SKILL.md
 │   ├── peer-rate-optimizer/
 │   │   ├── SKILL.md
 │   │   └── scripts/optimize.py
@@ -264,11 +330,10 @@ No KYC. No custodial accounts. No identity verification. This is why it works fo
 
 | Package | Purpose |
 |---------|---------|
-| `@zkp2p/offramp-sdk` | LP management, intents, quotes |
-| `@zkp2p-pay/sdk` | Pay checkout sessions |
+| `@zkp2p/sdk` | LP management, intents, quotes, taker tiers |
 | `@zkp2p/providers` | Payment platform templates (18 platforms) |
 | `@reclaimprotocol/attestor-core` | Headless proof generation |
-| `@peerlytics/sdk` | Market analytics |
+| `@peerlytics/sdk` | Protocol analytics, explorer, market data (Peerlytics class) |
 
 ### Supported Payment Platforms
 
@@ -308,12 +373,18 @@ clawhub publish skills/earn-on-idle-usdc --slug earn-on-idle-usdc
 clawhub publish skills/earn-as-defi-manager --slug earn-as-defi-manager
 clawhub publish skills/check-fx-rates --slug check-fx-rates
 clawhub publish skills/send-usdc --slug send-usdc
+clawhub publish skills/analyze-peer-protocol --slug analyze-peer-protocol
+clawhub publish skills/look-up-peer-data --slug look-up-peer-data
+clawhub publish skills/monitor-peer-activity --slug monitor-peer-activity
 
 # Publish implementation skills (full reference)
 clawhub publish skills/peer-lp --slug peer-lp
 clawhub publish skills/peer-vault --slug peer-vault
 clawhub publish skills/peer-checkout --slug peer-checkout
 clawhub publish skills/peer-market --slug peer-market
+clawhub publish skills/peer-analytics --slug peer-analytics
+clawhub publish skills/peer-explorer --slug peer-explorer
+clawhub publish skills/peer-activity --slug peer-activity
 clawhub publish skills/peer-rate-optimizer --slug peer-rate-optimizer
 clawhub publish skills/peer-onramp --slug peer-onramp
 clawhub publish skills/peer-offramp --slug peer-offramp

@@ -11,12 +11,15 @@ A ZKP2P vault is a permissionless **Rate Manager** that controls conversion rate
 
 All vault operations are pure on-chain calls. No browser extension, no proof generation, no KYC required.
 
-**Contracts (Base staging):**
+**Contracts (Base Sepolia Staging — chain ID 84532):**
 
-| Contract | Address |
-|----------|---------|
-| DepositRateManagerRegistryV1 | `0x3125F621482887d158cb51cE9b54D9D25b145877` |
-| DepositRateManagerController | `0x2CF2FA7F21be0F920E1D8f4bb9C08E2c07F0E5d7` |
+| Contract | Address | Environment |
+|----------|---------|-------------|
+| DepositRateManagerRegistryV1 | `0x3125F621482887d158cb51cE9b54D9D25b145877` | Staging |
+| DepositRateManagerController | `0x2CF2FA7F21be0F920E1D8f4bb9C08E2c07F0E5d7` | Staging |
+| Escrow | `0x5C2a8B9246777eE4501B6C426a8B8C7635C7b5b5` | Staging |
+
+> **Note:** Vault contracts are currently staging-only. Production addresses not yet available. The staging Escrow (`0x5C2a8B...`) is different from the production Escrow (`0x2f121C...`).
 
 **Staging Indexer:** `https://indexer.hyperindex.xyz/00be13d/v1/graphql`
 
@@ -44,9 +47,9 @@ const publicClient = createPublicClient({
   transport: http(),
 });
 
-const REGISTRY = "0x3125F621482887d158cb51cE9b54D9D25b145877";
-const CONTROLLER = "0x2CF2FA7F21be0F920E1D8f4bb9C08E2c07F0E5d7";
-const ESCROW = "0x5C2a8B9246777eE4501B6C426a8B8C7635C7b5b5";
+const REGISTRY = "0x3125F621482887d158cb51cE9b54D9D25b145877";  // staging
+const CONTROLLER = "0x2CF2FA7F21be0F920E1D8f4bb9C08E2c07F0E5d7"; // staging
+const ESCROW = "0x5C2a8B9246777eE4501B6C426a8B8C7635C7b5b5";     // staging (NOT production 0x2f121C...)
 const ADDRESS_ZERO = "0x0000000000000000000000000000000000000000";
 ```
 

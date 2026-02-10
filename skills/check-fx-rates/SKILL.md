@@ -24,7 +24,7 @@ Before buying USDC or paying a human in fiat, the agent needs to know the best a
 Get the best rate for 100 USDC via Venmo or Wise:
 
 ```typescript
-import { OfframpClient } from '@zkp2p/offramp-sdk';
+import { OfframpClient } from '@zkp2p/sdk';
 
 const client = new OfframpClient({
   walletClient,
@@ -53,7 +53,7 @@ const quote = await client.getQuote({
 
 | Source | Access | Best For |
 |--------|--------|---------|
-| Quote API (`@zkp2p/offramp-sdk`) | API key | Best rate for a specific amount |
+| Quote API (`@zkp2p/sdk`) | API key | Best rate for a specific amount |
 | Peerlytics (`@peerlytics/sdk`) | API key or x402 (USDC micropayment) | Spreads, volume, LP rankings |
 | ZKP2P Indexer | Open GraphQL | Raw on-chain state, deposit details |
 
@@ -74,20 +74,23 @@ The conversion rate is how much fiat per 1 USDC. A rate of `1.012` means $1.012 
 ## Spread Comparison (Peerlytics)
 
 ```typescript
-import { PeerlyticsClient } from '@peerlytics/sdk';
+import { Peerlytics } from '@peerlytics/sdk';
 
-const analytics = new PeerlyticsClient({
+const client = new Peerlytics({
   apiKey: process.env.PEERLYTICS_API_KEY,
-  baseUrl: 'https://api.peerlytics.xyz',
 });
 
-const spreads = await analytics.getSpreads({
-  paymentPlatforms: ['venmo', 'cashapp', 'wise', 'revolut', 'paypal', 'zelle'],
-  fiatCurrencies: ['USD'],
+const market = await client.getMarketSummary({
+  platform: ['venmo', 'cashapp', 'wise', 'revolut', 'paypal'],
+  currency: ['USD'],
 });
 
-// spreads.venmo.USD  -> { min: 1.005, max: 1.035, median: 1.018, count: 42 }
-// spreads.wise.USD   -> { min: 1.002, max: 1.028, median: 1.012, count: 67 }
+// market.markets[0] -> {
+//   platform: 'wise', currency: 'USD',
+//   sampleSize: 67, totalLiquidity: 80000,
+//   p25: 1.005, median: 1.012, p75: 1.020, p90: 1.028,
+//   suggestedRate: 1.010
+// }
 ```
 
 ## Full Implementation Details
@@ -97,6 +100,6 @@ See the **`peer-market`** skill for Peerlytics SDK setup (including x402 keyless
 ## Environment Variables
 
 ```bash
-export ZKP2P_API_KEY="..."        # Required -- for quote API (offramp-sdk)
+export ZKP2P_API_KEY="..."        # Required -- for quote API (@zkp2p/sdk)
 export PEERLYTICS_API_KEY="..."   # Optional -- for analytics (or use x402 instead)
 ```

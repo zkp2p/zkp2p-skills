@@ -17,12 +17,17 @@
 | GatingService | `0x396D31055Db28C0C6f36e8b36f18FE7227248a97` | Intent validation |
 | USDC | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` | Base USDC token |
 
-## Vault Contracts (Base Staging)
+## Vault Contracts (Base Sepolia Staging — Chain ID: 84532)
+
+> **Note:** Vault contracts are currently deployed on staging only. Production addresses will differ.
+>
+> The staging Escrow (`0x5C2a8B9246777eE4501B6C426a8B8C7635C7b5b5`) differs from the production Escrow (`0x2f121CDDCA6d652f35e8B3E560f9760898888888`).
 
 | Contract | Address | Purpose |
 |----------|---------|---------|
 | DepositRateManagerRegistryV1 | `0x3125F621482887d158cb51cE9b54D9D25b145877` | Vault creation & rate mgmt |
 | DepositRateManagerController | `0x2CF2FA7F21be0F920E1D8f4bb9C08E2c07F0E5d7` | Delegation & rate computation |
+| Escrow (Staging) | `0x5C2a8B9246777eE4501B6C426a8B8C7635C7b5b5` | Staging escrow for vault operations |
 
 ## Key Function Signatures
 
@@ -153,7 +158,7 @@ getIntent(address orchestrator, bytes32 intentHash) returns (Intent)
 
 ABIs can be obtained from:
 - Basescan verified contracts (paste address into basescan.org)
-- `@zkp2p/offramp-sdk` package (bundled ABIs)
+- `@zkp2p/sdk` package (bundled ABIs)
 - ZKP2P GitHub repositories
 
 ## Common Patterns

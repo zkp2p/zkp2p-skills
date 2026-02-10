@@ -27,7 +27,7 @@ The off-ramp flow is the mirror of the on-ramp:
 | Step | Status | Notes |
 |------|--------|-------|
 | Find LP | AVAILABLE | Query via indexer or `getQuote()` |
-| Signal Intent | AVAILABLE | `signalIntent()` in `@zkp2p/offramp-sdk` |
+| Signal Intent | AVAILABLE | `signalIntent()` in `@zkp2p/sdk` |
 | LP Sends Fiat | LP-SIDE | Agent waits; LP handles fiat transfer |
 | LP Proves | LP-SIDE | LP generates proof via PeerAuth extension |
 | LP Fulfills | LP-SIDE | LP calls `fulfillIntent()` on-chain |
@@ -40,7 +40,7 @@ The off-ramp flow is the mirror of the on-ramp:
 Query for available LP deposits that accept the target payment platform and currency:
 
 ```typescript
-import { OfframpClient } from '@zkp2p/offramp-sdk';
+import { OfframpClient } from '@zkp2p/sdk';
 
 const client = new OfframpClient({
   walletClient,
@@ -173,7 +173,7 @@ const zellePayeeHash = keccak256(encodePacked(
 
 ```typescript
 // Register payee details with ZKP2P API (encrypted, LP-only access)
-import { apiPostDepositDetails } from '@zkp2p/offramp-sdk';
+import { apiPostDepositDetails } from '@zkp2p/sdk';
 
 const result = await apiPostDepositDetails(
   {
@@ -271,7 +271,7 @@ query FulfillmentDetails($intentHash: String!) {
 ## Complete Off-Ramp Flow (Agent Pays Freelancer)
 
 ```typescript
-import { OfframpClient } from '@zkp2p/offramp-sdk';
+import { OfframpClient } from '@zkp2p/sdk';
 import { createWalletClient, http, keccak256, toBytes } from 'viem';
 import { base } from 'viem/chains';
 import { privateKeyToAccount } from 'viem/accounts';

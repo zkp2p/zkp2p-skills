@@ -16,13 +16,13 @@ You deposit USDC into an on-chain escrow on Base. Buyers signal intents against 
 ### Install Dependencies
 
 ```bash
-npm install @zkp2p/offramp-sdk viem
+npm install @zkp2p/sdk viem
 ```
 
 ### Initialize Client
 
 ```typescript
-import { OfframpClient } from '@zkp2p/offramp-sdk';
+import { OfframpClient } from '@zkp2p/sdk';
 import { createWalletClient, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { base } from 'viem/chains';
@@ -80,7 +80,7 @@ if (!hadAllowance) {
 import {
   resolvePaymentMethodHash,
   resolveFiatCurrencyBytes32,
-} from '@zkp2p/offramp-sdk';
+} from '@zkp2p/sdk';
 
 // Payment method hashes are keccak256 of lowercase name
 const wiseHash = resolvePaymentMethodHash('wise');
@@ -172,7 +172,7 @@ Update the minimum conversion rate for a specific payment method + currency pair
 import {
   resolvePaymentMethodHash,
   resolveFiatCurrencyBytes32,
-} from '@zkp2p/offramp-sdk';
+} from '@zkp2p/sdk';
 
 await client.setCurrencyMinRate({
   depositId: 42n,
@@ -398,7 +398,7 @@ await client.releaseFundsToPayer({
 ## Contract Resolution
 
 ```typescript
-import { getContracts, getPaymentMethodsCatalog } from '@zkp2p/offramp-sdk';
+import { getContracts, getPaymentMethodsCatalog } from '@zkp2p/sdk';
 
 // Get all contract addresses and ABIs
 const { addresses, abis } = getContracts(8453, 'production');
@@ -420,6 +420,63 @@ const catalog = getPaymentMethodsCatalog(8453, 'production');
 6. **Never set rates to zero unintentionally.** A `minConversionRate` of `0n` deactivates that currency pair.
 7. **Confirm before withdrawDeposit.** This removes all available funds. If intents are active, those funds remain locked until fulfilled/cancelled/expired.
 8. **Rate precision matters.** All conversion rates use 18 decimals. Double-check calculations. `1% markup = 1.01 * 1e18 = 1010000000000000000`.
+
+## Monitor Deposit Health
+
+Track deposit utilization, detect stale deposits, and cross-reference with Peerlytics explorer data.
+
+### Utilization Check
+
+```typescript
+async function checkDepositHealth(client: OfframpClient) {
+  const deposits = await client.getDeposits();
+
+  for (const d of deposits) {
+    const available = Number(d.remainingDeposits);
+    const locked = Number(d.outstandingIntentAmount);
+    const total = available + locked;
+    const utilization = total > 0 ? locked / total : 0;
+
+    // Flag high utilization -- most funds are locked in intents
+    if (utilization > 0.8) {
+      console.log(`Deposit #${d.depositId}: ${(utilization * 100).toFixed(0)}% utilized. Consider adding funds.`);
+    }
+
+    // Flag inactive deposits -- accepting intents but no fills
+    if (d.acceptingIntents && available > 0 && locked === 0) {
+      console.log(`Deposit #${d.depositId}: Active but no locked intents. Check rates are competitive.`);
+    }
+
+    // Flag low balance
+    if (available < 100_000000) { // < 100 USDC
+      console.log(`Deposit #${d.depositId}: Low balance (${available / 1e6} USDC available).`);
+    }
+  }
+}
+```
+
+### Cross-Reference with Peerlytics Explorer
+
+Use the `@peerlytics/sdk` to get richer deposit analytics:
+
+```typescript
+import { Peerlytics } from '@peerlytics/sdk';
+
+const peerlytics = new Peerlytics({ apiKey: process.env.PEERLYTICS_API_KEY });
+
+// Get detailed deposit data with intent history
+const detail = await peerlytics.getDeposit(depositId);
+// detail.deposit -> enriched deposit with USD values
+// detail.intents -> recent intents against this deposit
+// detail.linked.paymentDetails -> currencies, platforms, verifiers
+
+// Get maker portfolio overview
+const portfolio = await peerlytics.getMaker(account.address);
+// portfolio.summary -> totalDeposits, activeDeposits, totalFillVolumeUsd, successRate, weightedAvgApr
+// portfolio.deposits -> per-deposit breakdown with status, apr, turnover
+// portfolio.currencyAllocations -> volume distribution by currency
+// portfolio.platformAllocations -> volume distribution by platform
+```
 
 ## Common Patterns
 
@@ -533,6 +590,17 @@ async function checkRebalance(client: OfframpClient) {
 | Zelle (Citi) | `zelle-citi` | USD |
 
 Use `getPaymentMethodsCatalog(8453, 'production')` for the canonical list of supported methods and currencies.
+
+## Environment
+
+| | Production | Staging |
+|--|-----------|---------|
+| Chain | Base (8453) | Base Sepolia (84532) |
+| Escrow | `0x2f121CDDCA6d652f35e8B3E560f9760898888888` | `0x5C2a8B9246777eE4501B6C426a8B8C7635C7b5b5` |
+| Orchestrator | `0x88888883Ed048FF0a415271B28b2F52d431810D0` | - |
+| Core API | `https://api.zkp2p.xyz` | `https://api-staging.zkp2p.xyz` |
+| Peerlytics | `https://peerlytics.xyz` | - |
+| Indexer | - | `https://indexer.hyperindex.xyz/00be13d/v1/graphql` |
 
 ## API Reference
 

@@ -4,14 +4,22 @@ Complete ABI signatures, indexer schemas, and query examples for ZKP2P vault (DR
 
 ---
 
-## Contract Addresses (Base Staging)
+## Contract Addresses
 
-| Contract | Address |
-|----------|---------|
-| DepositRateManagerRegistryV1 | `0x3125F621482887d158cb51cE9b54D9D25b145877` |
-| DepositRateManagerController | `0x2CF2FA7F21be0F920E1D8f4bb9C08E2c07F0E5d7` |
-| Orchestrator | `0xd067Ade072a0F034E277BB26CdCE9F360A2a4127` |
-| Escrow | `0x5C2a8B9246777eE4501B6C426a8B8C7635C7b5b5` |
+### Staging (Base Sepolia — Chain ID 84532)
+
+> **Vault contracts are currently staging-only.** Production vault addresses are not yet available.
+
+| Contract | Address | Notes |
+|----------|---------|-------|
+| DepositRateManagerRegistryV1 | `0x3125F621482887d158cb51cE9b54D9D25b145877` | Staging |
+| DepositRateManagerController | `0x2CF2FA7F21be0F920E1D8f4bb9C08E2c07F0E5d7` | Staging |
+| Orchestrator | `0xd067Ade072a0F034E277BB26CdCE9F360A2a4127` | Staging |
+| Escrow | `0x5C2a8B9246777eE4501B6C426a8B8C7635C7b5b5` | Staging (different from production `0x2f121C...`) |
+
+### Production (Base Mainnet — Chain ID 8453)
+
+Production vault contracts have not been deployed yet. The production Escrow is `0x2f121CDDCA6d652f35e8B3E560f9760898888888` (see `shared/references/contracts.md`).
 
 ---
 

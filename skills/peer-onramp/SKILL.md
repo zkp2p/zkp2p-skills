@@ -24,12 +24,12 @@ The on-ramp flow consists of six steps:
 
 | Step | Status | Notes |
 |------|--------|-------|
-| Get Quote | AVAILABLE | `@zkp2p/offramp-sdk` |
-| Signal Intent | AVAILABLE | `@zkp2p/offramp-sdk` |
+| Get Quote | AVAILABLE | `@zkp2p/sdk` |
+| Signal Intent | AVAILABLE | `@zkp2p/sdk` |
 | Send Fiat | PLATFORM-DEPENDENT | Requires payment platform credentials |
 | Generate Proof | AVAILABLE | `@reclaimprotocol/attestor-core` (Node.js compatible) |
 | Submit Proof | AVAILABLE | Attestation service REST API |
-| Fulfill Intent | AVAILABLE | `@zkp2p/offramp-sdk` |
+| Fulfill Intent | AVAILABLE | `@zkp2p/sdk` |
 
 **All six steps work today.** Proof generation uses `@reclaimprotocol/attestor-core` v4.0.3, the same library the PeerAuth browser extension uses internally. It runs headlessly in Node.js.
 
@@ -51,11 +51,11 @@ Not all payment platforms have equal agent readiness:
 ## Setup
 
 ```bash
-npm install @zkp2p/offramp-sdk @reclaimprotocol/attestor-core @zkp2p/providers viem
+npm install @zkp2p/sdk @reclaimprotocol/attestor-core @zkp2p/providers viem
 ```
 
 ```typescript
-import { OfframpClient } from '@zkp2p/offramp-sdk';
+import { OfframpClient } from '@zkp2p/sdk';
 import { createClaimOnAttestor } from '@reclaimprotocol/attestor-core';
 import { createWalletClient, http } from 'viem';
 import { base } from 'viem/chains';
@@ -251,7 +251,7 @@ const claimRequest = {
   },
   ownerPrivateKey: process.env.PRIVATE_KEY,
   client: {
-    url: 'wss://attestation-service.zkp2p.xyz/ws', // ZKP2P's attestor
+    url: 'wss://attestation-service.zkp2p.xyz/ws', // provisional — confirm with ZKP2P team
   },
 };
 
@@ -296,7 +296,7 @@ const claimRequest = {
   },
   ownerPrivateKey: process.env.PRIVATE_KEY,
   client: {
-    url: 'wss://attestation-service.zkp2p.xyz/ws',
+    url: 'wss://attestation-service.zkp2p.xyz/ws', // provisional — confirm with ZKP2P team
   },
 };
 
@@ -412,6 +412,41 @@ Agent provides payment instructions. Human makes payment. Agent generates proof:
 // Agent: fetches transaction feed → generates proof → fulfills intent
 ```
 
+## Taker Tiers
+
+ZKP2P uses a tier system that limits per-intent amounts based on taker history. New addresses start at the lowest tier and graduate as they successfully complete intents.
+
+| Tier | Name | Per-Intent Cap | Requirements |
+|------|------|---------------|--------------|
+| 0 | PEASANT | ~$50 | New address, no history |
+| 1 | PEER | ~$250 | 1+ successful intents |
+| 2 | PLUS | ~$1,000 | Volume + success rate threshold |
+| 3 | PRO | ~$5,000 | Sustained volume + high success rate |
+| 4 | PLATINUM | ~$10,000 | High volume, excellent completion rate |
+| 5 | PEER_PRESIDENT | ~$25,000+ | Top tier, highest caps |
+
+Caps also vary by platform risk level. Higher-risk platforms (CashApp, Zelle) have lower caps per tier than lower-risk platforms (Wise, Revolut).
+
+### Check Taker Tier
+
+Taker tier data is available via the Peerlytics API:
+
+```typescript
+import { Peerlytics } from '@peerlytics/sdk';
+
+const peerlytics = new Peerlytics({ apiKey: process.env.PEERLYTICS_API_KEY });
+const history = await peerlytics.getTakerHistory(account.address);
+
+// history.stats.lockScore -> numeric trust score
+// history.stats.tier -> 'PEASANT' | 'PEER' | 'PLUS' | 'PRO' | 'PLATINUM' | 'PEER_PRESIDENT'
+// history.stats.tierProgress -> { currentTier, nextTier, progress, volumeNeeded }
+// history.intents -> { total, fulfilled, pruned, successRate, volumeUsd }
+```
+
+### Cooldown Between Intents
+
+After an intent is pruned (expired without fulfillment), there is a cooldown period before the taker can signal another intent. Repeated prunes lower the trust score and may reduce the taker's tier.
+
 ## Security Rules
 
 1. **Encrypt credentials at rest.** Payment platform tokens give access to financial accounts.
@@ -427,12 +462,14 @@ Agent provides payment instructions. Human makes payment. Agent generates proof:
 2. **Owner private key**: The extension uses a hardcoded key. Agents should use their own wallet private key or a dedicated signing key.
 3. **Rate limiting**: Server-side proof generation from data center IPs may trigger rate limits on the attestor. Test concurrency limits.
 
-## Contract Reference
+## Environment
 
-| Contract | Address | Chain |
-|----------|---------|-------|
-| Escrow | `0x2f121CDDCA6d652f35e8B3E560f9760898888888` | Base |
-| Orchestrator | `0x88888883Ed048FF0a415271B28b2F52d431810D0` | Base |
-| UnifiedPaymentVerifier | `0x16b3e4a3CA36D3A4bCA281767f15C7ADeF4ab163` | Base |
-| USDC | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` | Base |
-| Attestation Service | `https://attestation-service.zkp2p.xyz` | - |
+| | Production | Staging |
+|--|-----------|---------|
+| Chain | Base (8453) | Base Sepolia (84532) |
+| Escrow | `0x2f121CDDCA6d652f35e8B3E560f9760898888888` | `0x5C2a8B9246777eE4501B6C426a8B8C7635C7b5b5` |
+| Orchestrator | `0x88888883Ed048FF0a415271B28b2F52d431810D0` | - |
+| UnifiedPaymentVerifier | `0x16b3e4a3CA36D3A4bCA281767f15C7ADeF4ab163` | - |
+| USDC | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` | - |
+| Core API | `https://api.zkp2p.xyz` | `https://api-staging.zkp2p.xyz` |
+| Attestation Service | `https://attestation-service.zkp2p.xyz` | `https://attestation-service-staging.zkp2p.xyz` |

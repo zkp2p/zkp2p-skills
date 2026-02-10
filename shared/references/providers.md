@@ -116,10 +116,10 @@ interface ResponseMatch {
 
 ## Using Provider Templates with SDK
 
-### Via Offramp SDK (LP Operations)
+### Via SDK (LP Operations)
 
 ```typescript
-import { getPaymentMethodsCatalog } from '@zkp2p/offramp-sdk';
+import { getPaymentMethodsCatalog } from '@zkp2p/sdk';
 
 // Get all available payment methods for Base mainnet production
 const catalog = getPaymentMethodsCatalog(8453, 'production');
@@ -131,19 +131,9 @@ const wiseMethods = catalog.wise;
 // wiseMethods.displayName         — human-readable name
 ```
 
-### Via Pay SDK (Checkout Operations)
+### Via Pay Checkout (REST API)
 
-```typescript
-import { ZKP2PPay } from '@zkp2p-pay/sdk';
-
-const pay = new ZKP2PPay({
-  apiKey: 'your-api-key',
-  environment: 'production',
-});
-
-// List supported payment methods for a checkout
-const methods = await pay.getPaymentMethods();
-```
+Pay checkout uses REST API directly. See the `peer-checkout` skill for endpoint documentation.
 
 ### Direct Provider Template Usage
 

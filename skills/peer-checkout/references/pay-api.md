@@ -1,16 +1,14 @@
-# ZKP2P Pay SDK API Reference
+# ZKP2P Pay REST API Reference
 
-## createCheckoutSession()
+All endpoints use base URL `https://api.pay.zkp2p.xyz` and require the `x-api-key` header with your merchant API key.
 
-Creates a new checkout session and returns a hosted checkout URL.
+## Create Checkout Session
 
-### Request Parameters
-
-```typescript
-createCheckoutSession(params: CheckoutParams, options: ApiOptions): Promise<CheckoutSession>
+```
+POST /v1/checkout/session
 ```
 
-**CheckoutParams:**
+### Request Body
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -24,13 +22,27 @@ createCheckoutSession(params: CheckoutParams, options: ApiOptions): Promise<Chec
 | `fiatCurrency` | string | No | Restrict to specific fiat currency (e.g., `'USD'`) |
 | `callbackUrl` | string | No | URL to redirect payer after completion |
 
-**ApiOptions:**
+### Example
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `apiBaseUrl` | string | Yes | API base URL: `https://api.pay.zkp2p.xyz` |
-| `apiKey` | string | Yes | Merchant API key |
-| `timeoutMs` | number | No | Request timeout in milliseconds (default: 15000) |
+```typescript
+const response = await fetch('https://api.pay.zkp2p.xyz/v1/checkout/session', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': process.env.ZKP2P_PAY_API_KEY!,
+  },
+  body: JSON.stringify({
+    merchantId: 'your_merchant_id',
+    amountUsdc: '25.00',
+    destinationChainId: 8453,
+    destinationToken: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+    recipientAddress: AGENT_WALLET,
+    metadata: { serviceId: 'task_123' },
+  }),
+});
+
+const session = await response.json();
+```
 
 ### Response: CheckoutSession
 
@@ -50,12 +62,21 @@ interface CheckoutSession {
 
 ---
 
-## getOrderStatus()
+## Get Order Status
 
-Polls current order status.
+```
+GET /v1/checkout/session/{orderId}
+```
+
+### Example
 
 ```typescript
-getOrderStatus(orderId: string, options: ApiOptions): Promise<OrderStatusResponse>
+const response = await fetch(
+  `https://api.pay.zkp2p.xyz/v1/checkout/session/${orderId}`,
+  { headers: { 'x-api-key': process.env.ZKP2P_PAY_API_KEY! } },
+);
+
+const status = await response.json();
 ```
 
 ### Response: OrderStatusResponse

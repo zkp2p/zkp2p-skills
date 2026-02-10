@@ -1,18 +1,18 @@
-# @zkp2p/offramp-sdk -- LP Method Reference
+# @zkp2p/sdk -- LP Method Reference
 
-Complete API reference for all `@zkp2p/offramp-sdk` methods relevant to liquidity provider management.
+Complete API reference for all `@zkp2p/sdk` methods relevant to liquidity provider management.
 
 ## Installation
 
 ```bash
-npm install @zkp2p/offramp-sdk viem
+npm install @zkp2p/sdk viem
 ```
 
 ## Client Initialization
 
 ```typescript
-import { OfframpClient } from '@zkp2p/offramp-sdk';
-// Alias: import { Zkp2pClient } from '@zkp2p/offramp-sdk';
+import { OfframpClient } from '@zkp2p/sdk';
+// Alias: import { Zkp2pClient } from '@zkp2p/sdk';
 
 const client = new OfframpClient(options: Zkp2pClientOptions);
 ```
@@ -459,6 +459,41 @@ type QuoteResponse = {
 
 ---
 
+## Intent Operations (Taker-Side)
+
+These methods are used by takers (buyers) to signal and fulfill intents. Documented here for LP awareness and monitoring.
+
+### signalIntent
+
+Lock USDC in escrow for a fiat-to-crypto exchange. The taker commits to sending fiat payment.
+
+```typescript
+client.signalIntent(params: {
+  depositId: bigint | string;          // Target deposit ID
+  amount: bigint | string;             // USDC amount to lock (6 decimals)
+  toAddress: Address;                  // Recipient of USDC after fulfillment
+  processorName: string;               // Payment platform: 'wise', 'venmo', etc.
+  payeeDetails: string;                // Hashed payee details from quote
+  fiatCurrencyCode: string;            // Currency code: 'USD', 'EUR', etc.
+  conversionRate: string;              // Rate from quote (18-decimal string)
+  txOverrides?: TxOverrides;
+}): Promise<Hash>
+```
+
+### fulfillIntent
+
+Submit payment proof to complete an intent. The SDK handles attestation service interaction.
+
+```typescript
+client.fulfillIntent(params: {
+  intentHash: `0x${string}`;           // Intent hash from signalIntent tx
+  proof: object;                       // Reclaim proof { claim, signatures }
+  txOverrides?: TxOverrides;
+}): Promise<Hash>
+```
+
+---
+
 ## Contract Resolution
 
 ### getContracts
@@ -466,7 +501,7 @@ type QuoteResponse = {
 Get deployed contract addresses and ABIs for a given chain and environment.
 
 ```typescript
-import { getContracts } from '@zkp2p/offramp-sdk';
+import { getContracts } from '@zkp2p/sdk';
 
 const { addresses, abis } = getContracts(
   chainId: number,           // 8453 or 84532
@@ -498,7 +533,7 @@ const { addresses, abis } = getContracts(
 Get the catalog of supported payment methods, their hashes, and supported currencies.
 
 ```typescript
-import { getPaymentMethodsCatalog } from '@zkp2p/offramp-sdk';
+import { getPaymentMethodsCatalog } from '@zkp2p/sdk';
 
 const catalog = getPaymentMethodsCatalog(
   chainId: number,
@@ -531,7 +566,7 @@ const catalog = getPaymentMethodsCatalog(8453, 'production');
 Get the gating service public address for intent signature validation.
 
 ```typescript
-import { getGatingServiceAddress } from '@zkp2p/offramp-sdk';
+import { getGatingServiceAddress } from '@zkp2p/sdk';
 
 const address = getGatingServiceAddress(
   chainId: number,
@@ -549,7 +584,7 @@ const address = getGatingServiceAddress(
 Convert a payment method name to its keccak256 bytes32 hash.
 
 ```typescript
-import { resolvePaymentMethodHash } from '@zkp2p/offramp-sdk';
+import { resolvePaymentMethodHash } from '@zkp2p/sdk';
 
 const hash = resolvePaymentMethodHash('wise');
 // Returns keccak256("wise") as `0x${string}`
@@ -560,7 +595,7 @@ const hash = resolvePaymentMethodHash('wise');
 Convert a fiat currency code to its keccak256 bytes32 hash.
 
 ```typescript
-import { resolveFiatCurrencyBytes32 } from '@zkp2p/offramp-sdk';
+import { resolveFiatCurrencyBytes32 } from '@zkp2p/sdk';
 
 const hash = resolveFiatCurrencyBytes32('USD');
 // Returns keccak256("USD") as `0x${string}`
@@ -571,7 +606,7 @@ const hash = resolveFiatCurrencyBytes32('USD');
 Resolve a payment method hash from the on-chain catalog.
 
 ```typescript
-import { resolvePaymentMethodHashFromCatalog } from '@zkp2p/offramp-sdk';
+import { resolvePaymentMethodHashFromCatalog } from '@zkp2p/sdk';
 
 const hash = resolvePaymentMethodHashFromCatalog('wise', 8453, 'production');
 ```
@@ -581,7 +616,7 @@ const hash = resolvePaymentMethodHashFromCatalog('wise', 8453, 'production');
 Reverse-resolve a payment method hash back to its name.
 
 ```typescript
-import { resolvePaymentMethodNameFromHash } from '@zkp2p/offramp-sdk';
+import { resolvePaymentMethodNameFromHash } from '@zkp2p/sdk';
 
 const name = resolvePaymentMethodNameFromHash('0x...', 8453, 'production');
 // Returns 'wise' | 'revolut' | 'venmo' | etc.
@@ -592,7 +627,7 @@ const name = resolvePaymentMethodNameFromHash('0x...', 8453, 'production');
 ## Currency Utilities
 
 ```typescript
-import { Currency, currencyInfo, getCurrencyInfoFromHash } from '@zkp2p/offramp-sdk';
+import { Currency, currencyInfo, getCurrencyInfoFromHash } from '@zkp2p/sdk';
 
 // Currency enum includes 35+ currencies:
 // Currency.USD, Currency.EUR, Currency.GBP, Currency.SGD, Currency.AUD,

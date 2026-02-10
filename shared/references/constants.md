@@ -113,6 +113,34 @@ To compute in code:
 const currencyHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes('USD'));
 ```
 
+## Taker Tiers
+
+Taker intent caps are tiered based on on-chain history (lock score). Higher tiers unlock larger per-intent caps and access to more platforms.
+
+| Tier | Level | Description |
+|------|-------|-------------|
+| 1 | PEASANT | New takers, lowest caps |
+| 2 | PEER | Basic history established |
+| 3 | PLUS | Moderate volume history |
+| 4 | PRO | Significant track record |
+| 5 | PLATINUM | High volume, excellent completion rate |
+| 6 | PEER_PRESIDENT | Highest tier, maximum caps |
+
+### Platform Risk Levels
+
+Each payment platform has an assigned risk level that affects the effective per-intent cap:
+
+| Risk Level | Cap Multiplier | Platforms |
+|------------|---------------|-----------|
+| LOW | Highest caps | Wise, Revolut |
+| MEDIUM_HIGH | Moderate caps | Venmo, PayPal |
+| HIGH | Lower caps | CashApp, Zelle |
+| HIGHEST | Lowest caps | New/unverified platforms |
+
+### Cooldown
+
+After signaling an intent, takers may face a cooldown period before signaling another. Cooldown duration depends on tier level and platform risk. Higher tiers have shorter or no cooldowns.
+
 ## Builder Attribution (ERC-8021)
 
 | Field | Value |
