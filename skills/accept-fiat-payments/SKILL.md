@@ -46,7 +46,16 @@ The agent receives webhook notifications at each stage: payment started, proof g
 | MercadoPago | ARS, BRL, MXN |
 | N26 | EUR |
 
-## Quick Example
+## Checkout Modes
+
+| Mode | Payer Sees | Use When |
+|------|------------|----------|
+| `exact-fiat` | "Pay $50.00" -- no crypto jargon | Charging humans (recommended) |
+| `exact-token` | Per-platform fiat quotes for fixed USDC output | Crypto-native pricing |
+
+**Use `exact-fiat` for human payers.** The checkout page shows only a fiat amount -- no USDC, no tokens, no chains. The payer thinks they're paying $50 via Venmo, not buying crypto.
+
+## Quick Example (exact-fiat)
 
 ```typescript
 const response = await fetch('https://api.pay.zkp2p.xyz/v1/checkout/session', {
@@ -57,7 +66,9 @@ const response = await fetch('https://api.pay.zkp2p.xyz/v1/checkout/session', {
   },
   body: JSON.stringify({
     merchantId: process.env.MERCHANT_ID,
-    amountUsdc: '50.00',
+    checkoutMode: 'exact-fiat',
+    fiatAmount: '50.00',
+    fiatCurrency: 'USD',
     destinationChainId: 8453,                                    // Base
     destinationToken: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', // USDC
     recipientAddress: AGENT_WALLET,
@@ -78,7 +89,9 @@ When the human completes payment, the agent receives an `order.fulfilled` webhoo
   "event": "order.fulfilled",
   "data": {
     "orderId": "ord_abc123",
-    "amountUsdc": "50.00",
+    "amountUsdc": "49.50",
+    "fiatAmount": "50.00",
+    "fiatCurrency": "USD",
     "transactionHash": "0x..."
   }
 }
