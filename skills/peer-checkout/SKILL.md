@@ -13,9 +13,41 @@ The payer completes payment on their chosen platform, generates a zkTLS proof vi
 
 ## Setup
 
-1. Register a merchant account at `merchant.pay.zkp2p.xyz` to obtain your `merchantId` and API key.
+### 1. Register as a Merchant (Programmatic — No Dashboard Required)
 
-2. Configure your webhook endpoint URL in the merchant dashboard.
+```bash
+curl -X POST https://api.pay.zkp2p.xyz/api/merchants \
+  -H "Content-Type: application/json" \
+  -d '{"name": "My AI Agent"}'
+```
+
+Response:
+```json
+{
+  "success": true,
+  "responseObject": {
+    "merchant": {
+      "id": "merchant_abc123",
+      "name": "My AI Agent",
+      "walletAddress": "0x..."
+    },
+    "apiKey": "sk_live_xxxxx"
+  }
+}
+```
+
+No authentication required. Store the `apiKey` securely — it is only returned once. The `merchant.id` and `apiKey` are needed for all subsequent API calls.
+
+### 2. (Optional) Register a Webhook Endpoint
+
+```bash
+curl -X POST https://api.pay.zkp2p.xyz/v1/merchant/webhooks \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: sk_live_xxxxx" \
+  -d '{"url": "https://your-agent.example.com/webhooks/zkp2p"}'
+```
+
+Alternatively, you can poll session status instead of using webhooks (see [Track Order Status](#track-order-status)).
 
 ## Create Checkout Session
 
@@ -49,7 +81,7 @@ Parameters:
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `merchantId` | string | Yes | Your merchant ID from the dashboard |
+| `merchantId` | string | Yes | Your merchant ID from `POST /api/merchants` registration |
 | `amountUsdc` | string | Yes | Amount in USDC (e.g., `'25.00'`) |
 | `destinationChainId` | number | Yes | Target chain (8453 = Base) |
 | `destinationToken` | string | Yes | Token address (USDC on Base: `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`) |
@@ -69,7 +101,7 @@ The checkout URL opens ZKP2P Pay's hosted checkout interface where the payer sel
 
 ## Webhook Handling
 
-Set up an HTTP endpoint to receive webhook notifications. Register the endpoint URL in your merchant dashboard.
+Set up an HTTP endpoint to receive webhook notifications. Register the endpoint URL via the webhooks API (see Setup step 2) or in the merchant dashboard.
 
 ### Event Types
 
@@ -196,7 +228,7 @@ created -> payment_started -> payment_completed -> proof_generated -> proof_subm
 
 | Error | Cause | Recovery |
 |-------|-------|----------|
-| `INVALID_MERCHANT_ID` | Merchant ID not found | Verify merchant registration |
+| `INVALID_MERCHANT_ID` | Merchant ID not found | Verify `POST /api/merchants` registration succeeded |
 | `INVALID_AMOUNT` | Amount below minimum or malformed | Use a valid decimal string (e.g., `'1.00'`) |
 | `SESSION_EXPIRED` | Checkout session timed out | Create a new checkout session |
 | `RATE_LIMIT_EXCEEDED` | Too many API calls | Implement exponential backoff |

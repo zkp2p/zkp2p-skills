@@ -93,16 +93,26 @@ When the human completes payment, the agent receives an `order.fulfilled` webhoo
 - Marketplace agents collecting payment before releasing goods or access
 - Tip jars and pay-what-you-want for open agent services
 
+## Merchant Registration (Programmatic)
+
+Register via a single API call — no dashboard, no KYC, no manual steps:
+
+```bash
+curl -X POST https://api.pay.zkp2p.xyz/api/merchants \
+  -H "Content-Type: application/json" \
+  -d '{"name": "My AI Agent"}'
+```
+
+Returns `merchant.id` and `apiKey`. Store both securely — the API key is only returned once.
+
 ## Environment Variables
 
 | Variable | Description |
 |----------|-------------|
-| `PAY_API_KEY` | API key from the ZKP2P Pay merchant dashboard |
-| `MERCHANT_ID` | Merchant identifier from registration |
-| `WEBHOOK_SECRET` | Secret for verifying webhook signatures |
+| `PAY_API_KEY` | API key from `POST /api/merchants` registration |
+| `MERCHANT_ID` | Merchant identifier from `POST /api/merchants` registration |
+| `WEBHOOK_SECRET` | Secret for verifying webhook signatures (from webhook registration) |
 | `PRIVATE_KEY` | Agent wallet private key (for on-chain operations) |
-
-Register at `merchant.pay.zkp2p.xyz` to obtain credentials.
 
 ## Full Implementation
 
