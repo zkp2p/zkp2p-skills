@@ -49,7 +49,36 @@ curl -X POST https://api.pay.zkp2p.xyz/v1/merchant/webhooks \
 
 Alternatively, you can poll session status instead of using webhooks (see [Track Order Status](#track-order-status)).
 
+## Checkout Modes
+
+Two checkout modes control what the payer sees and how amounts work:
+
+| Mode | Fixed Side | Payer Sees | Use When |
+|------|-----------|------------|----------|
+| `exact-fiat` | Fiat amount | "Pay $25.00 via Venmo" -- no crypto jargon | Charging humans who think in dollars |
+| `exact-token` | USDC amount | Per-platform fiat quotes for a fixed USDC output | Pricing in USDC, crypto-native payers |
+
+**Recommended for agents: `exact-fiat`.** The payer sees a clean fiat amount with no mention of USDC, tokens, or chains. The checkout page hides all crypto complexity.
+
+### exact-fiat (Recommended)
+
+The payer pays a fixed fiat amount. The agent receives a variable USDC amount (fiat minus spread).
+
+- Checkout UI shows: "Pay $25.00" -- platforms sorted by best rate, unavailable ones grayed out
+- Requires: `fiatAmount`, `fiatCurrency`
+- Optional: `maxFeePercentage` (default 10%) -- caps the spread between fiat paid and USDC received
+
+### exact-token
+
+The agent receives an exact USDC amount. The payer sees per-platform fiat quotes that vary.
+
+- Checkout UI shows: "Send ~$25.50 via Venmo" with different fiat amounts per platform
+- Requires: `amountUsdc`
+- Better for: USDC-denominated pricing, crypto-native audiences
+
 ## Create Checkout Session
+
+### exact-fiat Example
 
 ```typescript
 const API_BASE = 'https://api.pay.zkp2p.xyz';
@@ -62,7 +91,9 @@ const response = await fetch(`${API_BASE}/v1/checkout/session`, {
   },
   body: JSON.stringify({
     merchantId: 'your_merchant_id',
-    amountUsdc: '25.00',
+    checkoutMode: 'exact-fiat',
+    fiatAmount: '25.00',
+    fiatCurrency: 'USD',
     destinationChainId: 8453,
     destinationToken: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
     recipientAddress: AGENT_WALLET,
@@ -77,16 +108,42 @@ const session = await response.json();
 // session.expiresAt     -- session expiration timestamp
 ```
 
-Parameters:
+### exact-token Example
+
+```typescript
+const response = await fetch(`${API_BASE}/v1/checkout/session`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': process.env.ZKP2P_PAY_API_KEY!,
+  },
+  body: JSON.stringify({
+    merchantId: 'your_merchant_id',
+    checkoutMode: 'exact-token',
+    amountUsdc: '25.00',
+    destinationChainId: 8453,
+    destinationToken: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+    recipientAddress: AGENT_WALLET,
+    metadata: { serviceId: 'task_123' },
+  }),
+});
+```
+
+### Parameters
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `merchantId` | string | Yes | Your merchant ID from `POST /api/merchants` registration |
-| `amountUsdc` | string | Yes | Amount in USDC (e.g., `'25.00'`) |
+| `checkoutMode` | string | Yes | `'exact-fiat'` or `'exact-token'` |
+| `fiatAmount` | string | exact-fiat only | Fiat amount the payer pays (e.g., `'25.00'`) |
+| `fiatCurrency` | string | exact-fiat only | Currency code (e.g., `'USD'`, `'EUR'`, `'GBP'`) |
+| `maxFeePercentage` | number | No | Max spread % for exact-fiat (default: 10) |
+| `amountUsdc` | string | exact-token only | USDC amount to receive (e.g., `'25.00'`) |
 | `destinationChainId` | number | Yes | Target chain (8453 = Base) |
 | `destinationToken` | string | Yes | Token address (USDC on Base: `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`) |
 | `recipientAddress` | string | Yes | Wallet address to receive USDC |
 | `metadata` | object | No | Arbitrary key-value pairs for your records |
+| `paymentPlatforms` | string[] | No | Restrict to specific platforms (e.g., `['venmo', 'wise']`) |
 
 ## Share Payment Link
 
@@ -223,6 +280,70 @@ created -> payment_started -> payment_completed -> proof_generated -> proof_subm
 - **Use HTTPS endpoints** for webhook receivers. HTTP endpoints will be rejected.
 - **Store your API key and webhook secret securely** -- use environment variables, not source code.
 - **Idempotency** -- webhooks may be delivered more than once. Use `orderId` as an idempotency key.
+
+## Customize Checkout UI
+
+Customize the hosted checkout page colors to match your brand. Only the left panel (order summary) is customizable -- the right panel (payment flow) stays fixed for payer trust.
+
+### Theme Presets
+
+Three built-in presets are available:
+
+| Preset | Description |
+|--------|-------------|
+| `default` | Cream background, dark text |
+| `dark` | Dark background, light text, blue accents |
+| `light` | White background, blue accents |
+
+### Set Theme via Dashboard
+
+Log in to the merchant dashboard at `merchant.pay.zkp2p.xyz` and configure colors under Settings > Checkout Theme.
+
+### Set Theme via API
+
+Requires Privy authentication (dashboard login). Use the merchant dashboard for initial setup, or the API for programmatic updates:
+
+```bash
+# Get available presets (public, no auth)
+curl https://api.pay.zkp2p.xyz/api/checkout/theme-presets
+
+# Set a preset (requires Privy auth)
+curl -X PUT https://api.pay.zkp2p.xyz/api/merchants/me/checkout-theme \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <privy_token>" \
+  -d '{"presetName": "dark"}'
+
+# Set custom colors (requires Privy auth)
+curl -X PUT https://api.pay.zkp2p.xyz/api/merchants/me/checkout-theme \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <privy_token>" \
+  -d '{
+    "presetName": "custom",
+    "pageBackgroundColor": "#0f0f0f",
+    "panelBackgroundColor": "#1a1a1a",
+    "panelTextColor": "#ffffff",
+    "panelTextMutedColor": "#a0a0a0",
+    "panelAccentColor": "#3b82f6",
+    "panelBorderColor": "#2a2a2a",
+    "buttonBackgroundColor": "#3b82f6",
+    "buttonTextColor": "#ffffff"
+  }'
+```
+
+### Customizable Fields
+
+| Field | Description |
+|-------|-------------|
+| `pageBackgroundColor` | Full page background |
+| `panelBackgroundColor` | Order summary panel background |
+| `panelTextColor` | Primary text color |
+| `panelTextMutedColor` | Secondary/muted text color |
+| `panelAccentColor` | Accent and border highlights |
+| `panelBorderColor` | Panel border color |
+| `buttonBackgroundColor` | Button fill color |
+| `buttonTextColor` | Button text color |
+
+All colors are hex format (`#xxxxxx`). Omitted fields inherit from the selected preset or defaults.
 
 ## Error Handling
 

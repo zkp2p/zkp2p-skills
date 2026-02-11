@@ -51,21 +51,33 @@ curl -X POST https://api.pay.zkp2p.xyz/api/merchants \
 POST /v1/checkout/session
 ```
 
+### Checkout Modes
+
+| Mode | Fixed Side | Required Fields | Payer Experience |
+|------|-----------|-----------------|------------------|
+| `exact-fiat` | Fiat amount | `fiatAmount`, `fiatCurrency` | Sees "Pay $25.00" -- no crypto jargon, platforms sorted by rate, unavailable ones grayed out |
+| `exact-token` | USDC amount | `amountUsdc` | Sees per-platform fiat quotes (e.g., "Send ~$25.50 via Venmo") |
+
+**Recommended for agents: `exact-fiat`** -- the payer sees only a fiat amount with no mention of USDC, tokens, or chains.
+
 ### Request Body
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `merchantId` | string | Yes | Merchant identifier from `POST /api/merchants` |
-| `amountUsdc` | string | Yes | USDC amount as decimal string (e.g., `'25.00'`) |
+| `checkoutMode` | string | Yes | `'exact-fiat'` or `'exact-token'` |
+| `fiatAmount` | string | exact-fiat | Fiat amount the payer pays (e.g., `'25.00'`) |
+| `fiatCurrency` | string | exact-fiat | Currency code (e.g., `'USD'`, `'EUR'`, `'GBP'`) |
+| `maxFeePercentage` | number | No | Max spread % between fiat paid and USDC received (default: 10). exact-fiat only |
+| `amountUsdc` | string | exact-token | USDC amount as decimal string (e.g., `'25.00'`) |
 | `destinationChainId` | number | Yes | Target chain ID. Base = `8453` |
 | `destinationToken` | string | Yes | Token contract address. USDC on Base = `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` |
 | `recipientAddress` | string | Yes | Wallet address to receive settled USDC |
 | `metadata` | Record<string, string> | No | Arbitrary key-value pairs attached to the order |
 | `paymentPlatforms` | string[] | No | Restrict to specific platforms (e.g., `['venmo', 'wise']`) |
-| `fiatCurrency` | string | No | Restrict to specific fiat currency (e.g., `'USD'`) |
 | `callbackUrl` | string | No | URL to redirect payer after completion |
 
-### Example
+### Example: exact-fiat (Recommended)
 
 ```typescript
 const response = await fetch('https://api.pay.zkp2p.xyz/v1/checkout/session', {
@@ -76,6 +88,31 @@ const response = await fetch('https://api.pay.zkp2p.xyz/v1/checkout/session', {
   },
   body: JSON.stringify({
     merchantId: 'your_merchant_id',
+    checkoutMode: 'exact-fiat',
+    fiatAmount: '25.00',
+    fiatCurrency: 'USD',
+    destinationChainId: 8453,
+    destinationToken: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+    recipientAddress: AGENT_WALLET,
+    metadata: { serviceId: 'task_123' },
+  }),
+});
+
+const session = await response.json();
+```
+
+### Example: exact-token
+
+```typescript
+const response = await fetch('https://api.pay.zkp2p.xyz/v1/checkout/session', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': process.env.ZKP2P_PAY_API_KEY!,
+  },
+  body: JSON.stringify({
+    merchantId: 'your_merchant_id',
+    checkoutMode: 'exact-token',
     amountUsdc: '25.00',
     destinationChainId: 8453,
     destinationToken: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
@@ -392,10 +429,110 @@ Legend:
 | GET | `/v1/merchant/webhooks` | List registered webhook endpoints |
 | POST | `/v1/merchant/webhooks` | Register a webhook endpoint |
 | DELETE | `/v1/merchant/webhooks/{webhookId}` | Remove a webhook endpoint |
+| GET | `/api/checkout/theme-presets` | List available theme presets (public) |
+| GET | `/api/merchants/me/checkout-theme` | Get merchant's checkout theme (Privy auth) |
+| PUT | `/api/merchants/me/checkout-theme` | Set/update checkout theme (Privy auth) |
+| DELETE | `/api/merchants/me/checkout-theme` | Reset to default theme (Privy auth) |
 
 Base URL: `https://api.pay.zkp2p.xyz`
 
-All endpoints except `POST /api/merchants` require the `x-api-key` header with your merchant API key.
+All endpoints except `POST /api/merchants` and `GET /api/checkout/theme-presets` require authentication. Checkout and webhook endpoints use the `x-api-key` header. Theme endpoints use Privy `Authorization: Bearer` token.
+
+---
+
+## Checkout Theme
+
+Customize the hosted checkout page colors. Only the left panel (order summary) is customizable -- the right panel (payment flow) stays fixed for payer trust.
+
+### Get Theme Presets
+
+```
+GET /api/checkout/theme-presets
+```
+
+No authentication required. Returns available presets.
+
+```json
+[
+  {
+    "name": "default",
+    "displayName": "Default (Cream)",
+    "colors": {
+      "pageBackgroundColor": "#f6f6f1",
+      "panelBackgroundColor": "#fafafa",
+      "panelTextColor": "#0b0b0b",
+      "panelTextMutedColor": "#5b5b5b",
+      "panelAccentColor": "#111111",
+      "panelBorderColor": "#e5e5e5",
+      "buttonBackgroundColor": "#111111",
+      "buttonTextColor": "#ffffff"
+    }
+  },
+  {
+    "name": "dark",
+    "displayName": "Dark Mode",
+    "colors": { "..." : "..." }
+  },
+  {
+    "name": "light",
+    "displayName": "Light & Clean",
+    "colors": { "..." : "..." }
+  }
+]
+```
+
+### Set Checkout Theme
+
+```
+PUT /api/merchants/me/checkout-theme
+```
+
+Requires Privy authentication (`Authorization: Bearer <privy_token>`).
+
+#### Apply a Preset
+
+```json
+{ "presetName": "dark" }
+```
+
+#### Custom Colors
+
+```json
+{
+  "presetName": "custom",
+  "pageBackgroundColor": "#0f0f0f",
+  "panelBackgroundColor": "#1a1a1a",
+  "panelTextColor": "#ffffff",
+  "panelTextMutedColor": "#a0a0a0",
+  "panelAccentColor": "#3b82f6",
+  "panelBorderColor": "#2a2a2a",
+  "buttonBackgroundColor": "#3b82f6",
+  "buttonTextColor": "#ffffff"
+}
+```
+
+All color fields are optional hex strings (`#xxxxxx`). Omitted fields inherit from the base preset. The theme is applied automatically when payers load the checkout URL.
+
+### Customizable Fields
+
+| Field | Description |
+|-------|-------------|
+| `pageBackgroundColor` | Full page background |
+| `panelBackgroundColor` | Order summary panel background |
+| `panelTextColor` | Primary text color |
+| `panelTextMutedColor` | Secondary/muted text color |
+| `panelAccentColor` | Accent and border highlights |
+| `panelBorderColor` | Panel border color |
+| `buttonBackgroundColor` | Button fill color |
+| `buttonTextColor` | Button text color |
+
+### Reset Theme
+
+```
+DELETE /api/merchants/me/checkout-theme
+```
+
+Removes custom theme. Checkout reverts to default preset.
 
 ---
 
