@@ -1,6 +1,49 @@
 # ZKP2P Pay REST API Reference
 
-All endpoints use base URL `https://api.pay.zkp2p.xyz` and require the `x-api-key` header with your merchant API key.
+All endpoints use base URL `https://api.pay.zkp2p.xyz`. Checkout and webhook endpoints require the `x-api-key` header with your merchant API key.
+
+## Register Merchant
+
+```
+POST /api/merchants
+```
+
+No authentication required. Creates a new merchant and returns an API key.
+
+### Request Body
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `name` | string | Yes | Merchant or agent name |
+| `logoUrl` | string | No | URL to merchant logo |
+
+### Example
+
+```bash
+curl -X POST https://api.pay.zkp2p.xyz/api/merchants \
+  -H "Content-Type: application/json" \
+  -d '{"name": "My AI Agent"}'
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "responseObject": {
+    "merchant": {
+      "id": "merchant_abc123",
+      "name": "My AI Agent",
+      "walletAddress": "0x..."
+    },
+    "apiKey": "sk_live_xxxxx"
+  }
+}
+```
+
+**Important:** The `apiKey` is only returned at creation time. Store it securely.
+
+---
 
 ## Create Checkout Session
 
@@ -12,7 +55,7 @@ POST /v1/checkout/session
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `merchantId` | string | Yes | Merchant identifier from dashboard registration |
+| `merchantId` | string | Yes | Merchant identifier from `POST /api/merchants` |
 | `amountUsdc` | string | Yes | USDC amount as decimal string (e.g., `'25.00'`) |
 | `destinationChainId` | number | Yes | Target chain ID. Base = `8453` |
 | `destinationToken` | string | Yes | Token contract address. USDC on Base = `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` |
@@ -310,7 +353,7 @@ function verifyWebhookSignature(
 - Use the **raw request body** (not parsed JSON) for HMAC computation
 - Use `crypto.timingSafeEqual()` to prevent timing attacks
 - Reject webhooks with timestamps older than 5 minutes to prevent replay attacks
-- The webhook secret is provided during merchant registration
+- The webhook secret is returned when you register a webhook endpoint via `POST /v1/merchant/webhooks`
 
 ---
 
@@ -340,6 +383,8 @@ Legend:
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
+| POST | `/api/merchants` | Register a new merchant (no auth required) |
+| GET | `/api/merchants/:id` | Get merchant details |
 | POST | `/v1/checkout/session` | Create a new checkout session |
 | GET | `/v1/checkout/session/{orderId}` | Get order status |
 | GET | `/v1/checkout/sessions` | List sessions for merchant (paginated) |
@@ -350,7 +395,7 @@ Legend:
 
 Base URL: `https://api.pay.zkp2p.xyz`
 
-All endpoints require the `x-api-key` header with your merchant API key.
+All endpoints except `POST /api/merchants` require the `x-api-key` header with your merchant API key.
 
 ---
 
