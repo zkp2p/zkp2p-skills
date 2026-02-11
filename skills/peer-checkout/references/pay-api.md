@@ -353,7 +353,7 @@ function verifyWebhookSignature(
 - Use the **raw request body** (not parsed JSON) for HMAC computation
 - Use `crypto.timingSafeEqual()` to prevent timing attacks
 - Reject webhooks with timestamps older than 5 minutes to prevent replay attacks
-- The webhook secret is provided during merchant registration
+- The webhook secret is returned when you register a webhook endpoint via `POST /v1/merchant/webhooks`
 
 ---
 
@@ -395,7 +395,7 @@ Legend:
 
 Base URL: `https://api.pay.zkp2p.xyz`
 
-All endpoints require the `x-api-key` header with your merchant API key.
+All endpoints except `POST /api/merchants` require the `x-api-key` header with your merchant API key.
 
 ---
 

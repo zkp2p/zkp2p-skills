@@ -186,7 +186,7 @@ function verifyWebhookSignature(
 }
 ```
 
-The `WEBHOOK_SECRET` is provided during merchant registration.
+The `WEBHOOK_SECRET` is returned when you register a webhook endpoint via the webhooks API (see Setup step 2).
 
 ## Track Order Status
 
