@@ -311,7 +311,8 @@ interface AddressStats {
 
 ### Endpoint
 
-- **Staging:** `https://indexer.hyperindex.xyz/00be13d/v1/graphql`
+- **Production:** `https://indexer.zkp2p.xyz/v1/graphql`
+- **Staging:** `https://indexer-staging.zkp2p.xyz/v1/graphql`
 
 ### Core Entities
 

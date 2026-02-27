@@ -17,7 +17,7 @@ Arguments:
 
 Examples:
     python3 optimize.py 0xabc123...
-    python3 optimize.py 0xabc123... https://indexer.hyperindex.xyz/00be13d/v1/graphql --json
+    python3 optimize.py 0xabc123... https://indexer-staging.zkp2p.xyz/v1/graphql --json
 """
 
 import json
@@ -36,7 +36,7 @@ MAX_CHANGE_PER_ITER = 50 * BPS_UNIT                   # 50 bps max change
 ZERO_FILL_DISABLE_DAYS = 7                            # Disable after N days of no fills
 WARNING_THRESHOLD_BPS = 30                             # Warn if change > 30 bps
 
-DEFAULT_INDEXER_URL = "https://indexer.hyperindex.xyz/00be13d/v1/graphql"
+DEFAULT_INDEXER_URL = "https://indexer-staging.zkp2p.xyz/v1/graphql"
 
 
 @dataclass

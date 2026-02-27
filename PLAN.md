@@ -123,7 +123,7 @@ zkp2p-skills/
 | USDC | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` | (Sepolia USDC) |
 | ZKP2P API | `https://api.zkp2p.xyz` | `https://api-staging.zkp2p.xyz` |
 | Peerlytics | `https://peerlytics.xyz` | - |
-| Indexer | `https://indexer.hyperindex.xyz/.../v1/graphql` | Staging slug differs |
+| Indexer | `https://indexer.zkp2p.xyz/v1/graphql` | `https://indexer-staging.zkp2p.xyz/v1/graphql` |
 
 ## Skill Design Principles
 

@@ -276,7 +276,8 @@ managerFeeAmount = 100e6 * 2e16 / 1e18 = 2e6 (2 USDC)
 
 ## Indexer GraphQL Schema
 
-**Endpoint:** `https://indexer.hyperindex.xyz/00be13d/v1/graphql`
+- **Production endpoint:** `https://indexer.zkp2p.xyz/v1/graphql`
+- **Staging endpoint:** `https://indexer-staging.zkp2p.xyz/v1/graphql`
 
 ### RateManager
 
