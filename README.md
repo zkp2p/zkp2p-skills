@@ -20,6 +20,7 @@ Peer is the only payment protocol where agents can transact without KYC. No iden
 | Analyze protocol health and performance | [`analyze-peer-protocol`](#analyze-peer-protocol) | Ready |
 | Look up deposits, intents, addresses | [`look-up-peer-data`](#look-up-peer-data) | Ready |
 | Monitor real-time protocol events | [`monitor-peer-activity`](#monitor-peer-activity) | Ready |
+| Create or update a payment provider | [`create-zkp2p-provider`](#create-zkp2p-provider) | Ready |
 
 > **New to Peer?** Start with the action-oriented skills above. They explain what you can do and why. Each one links to a deeper `peer-*` implementation skill with full SDK references and code.
 
@@ -61,14 +62,16 @@ Once installed, skills are automatically triggered when your request matches the
 /accept-fiat-payments
 /fiat-to-crypto
 /earn-on-idle-usdc
+/create-zkp2p-provider
 ```
 
 ## Skill Catalog
 
-This repo has two layers of skills:
+This repo has three layers of skills:
 
 - **Action skills** — Short, action-oriented skills for discovery. They explain *what* you can do, *why* Peer beats alternatives, and link to the implementation skill.
 - **Implementation skills** (`peer-*`) — Full SDK references, code examples, contract ABIs, and GraphQL queries.
+- **Authoring skills** — Workflows for extending Peer integrations safely.
 
 ### Action Skills (Start Here)
 
@@ -154,6 +157,17 @@ Search and look up specific deposits, intents, addresses, maker portfolios, and 
 Watch real-time protocol events — intents signaled, fulfilled, pruned, deposits created. Supports both polling and SSE streaming for continuous monitoring.
 
 **Implementation:** `peer-activity`
+
+---
+
+### Authoring Skills
+
+#### create-zkp2p-provider
+
+Create and test a Peer provider capture template for buyer TEE, identity, or
+payment flows. Covers authenticated browser capture, metadata and public
+parameter selectors, provider manifests, attestation-transformer boundaries,
+and end-to-end testing through PeerAuth and the developer portal.
 
 ---
 
@@ -269,6 +283,10 @@ zkp2p-skills/
 │   ├── monitor-peer-activity/
 │   │   └── SKILL.md
 │   │
+│   ├── create-zkp2p-provider/      # Provider authoring and TEE capture
+│   │   ├── SKILL.md
+│   │   └── references/
+│   │
 │   ├── peer-lp/                   # Implementation skills (full reference)
 │   │   ├── SKILL.md
 │   │   └── references/sdk-api.md
@@ -376,6 +394,9 @@ clawhub publish skills/send-usdc --slug send-usdc
 clawhub publish skills/analyze-peer-protocol --slug analyze-peer-protocol
 clawhub publish skills/look-up-peer-data --slug look-up-peer-data
 clawhub publish skills/monitor-peer-activity --slug monitor-peer-activity
+
+# Publish authoring skills
+clawhub publish skills/create-zkp2p-provider --slug create-zkp2p-provider
 
 # Publish implementation skills (full reference)
 clawhub publish skills/peer-lp --slug peer-lp
