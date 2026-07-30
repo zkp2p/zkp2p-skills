@@ -145,7 +145,8 @@ const orderbook = await client.getOrderbook({
 
 The ZKP2P indexer exposes on-chain state via GraphQL.
 
-**Staging endpoint:** `https://indexer.hyperindex.xyz/00be13d/v1/graphql`
+- **Production endpoint:** `https://indexer.zkp2p.xyz/v1/graphql`
+- **Staging endpoint:** `https://indexer-staging.zkp2p.xyz/v1/graphql`
 
 ### Active Deposits with Rates
 
@@ -391,4 +392,4 @@ query VaultBenchmark {
 | Chain | Base (8453) | Base Sepolia (84532) |
 | Peerlytics API | `https://peerlytics.xyz` | - |
 | Core API | `https://api.zkp2p.xyz` | `https://api-staging.zkp2p.xyz` |
-| Indexer | - | `https://indexer.hyperindex.xyz/00be13d/v1/graphql` |
+| Indexer | `https://indexer.zkp2p.xyz/v1/graphql` | `https://indexer-staging.zkp2p.xyz/v1/graphql` |

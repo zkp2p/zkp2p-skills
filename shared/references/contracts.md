@@ -152,7 +152,8 @@ getIntent(address orchestrator, bytes32 intentHash) returns (Intent)
 | `https://api.pay.zkp2p.xyz` | Pay checkout API |
 | `https://merchant.pay.zkp2p.xyz` | Merchant dashboard |
 | `https://api-staging.zkp2p.xyz` | Staging core API |
-| `https://indexer.hyperindex.xyz/00be13d/v1/graphql` | Staging indexer (GraphQL) |
+| `https://indexer.zkp2p.xyz/v1/graphql` | Production indexer (GraphQL) |
+| `https://indexer-staging.zkp2p.xyz/v1/graphql` | Staging indexer (GraphQL) |
 
 ## ABI Sources
 

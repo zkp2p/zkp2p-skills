@@ -600,7 +600,7 @@ Use `getPaymentMethodsCatalog(8453, 'production')` for the canonical list of sup
 | Orchestrator | `0x88888883Ed048FF0a415271B28b2F52d431810D0` | - |
 | Core API | `https://api.zkp2p.xyz` | `https://api-staging.zkp2p.xyz` |
 | Peerlytics | `https://peerlytics.xyz` | - |
-| Indexer | - | `https://indexer.hyperindex.xyz/00be13d/v1/graphql` |
+| Indexer | `https://indexer.zkp2p.xyz/v1/graphql` | `https://indexer-staging.zkp2p.xyz/v1/graphql` |
 
 ## API Reference
 

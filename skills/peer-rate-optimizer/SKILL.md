@@ -49,7 +49,7 @@ Query the Peerlytics orderbook for current market state:
 
 ### Vault Performance (Indexer)
 
-Query the staging indexer at `https://indexer.hyperindex.xyz/00be13d/v1/graphql`:
+Query the staging indexer at `https://indexer-staging.zkp2p.xyz/v1/graphql`:
 
 ```graphql
 # Vault aggregate stats — overall PnL and volume
@@ -185,7 +185,7 @@ const MAX_SPREAD_CAP = PRECISE_UNIT + (1000n * BPS_UNIT);   // 1.10  (10%)
 const MAX_CHANGE_PER_ITER = 50n * BPS_UNIT;                 // 50 bps
 
 const REGISTRY_ADDRESS = '0x3125F621482887d158cb51cE9b54D9D25b145877';
-const INDEXER_URL = 'https://indexer.hyperindex.xyz/00be13d/v1/graphql';
+const INDEXER_URL = 'https://indexer-staging.zkp2p.xyz/v1/graphql';
 
 // --- Types ---
 interface PairMetrics {
@@ -504,7 +504,8 @@ Adjust frequency based on volume:
 |----------|---------|-------|
 | DepositRateManagerRegistryV1 | `0x3125F621482887d158cb51cE9b54D9D25b145877` | Base (staging) |
 | DepositRateManagerController | `0x2CF2FA7F21be0F920E1D8f4bb9C08E2c07F0E5d7` | Base (staging) |
-| Indexer | `https://indexer.hyperindex.xyz/00be13d/v1/graphql` | - |
+| Indexer (Production) | `https://indexer.zkp2p.xyz/v1/graphql` | Base |
+| Indexer (Staging) | `https://indexer-staging.zkp2p.xyz/v1/graphql` | Base Sepolia |
 | Peerlytics Orderbook | `https://orderbook.peerlytics.xyz` | - |
 
 ## Rate Encoding Reference

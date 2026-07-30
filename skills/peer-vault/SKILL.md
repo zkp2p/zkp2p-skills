@@ -21,7 +21,7 @@ All vault operations are pure on-chain calls. No browser extension, no proof gen
 
 > **Note:** Vault contracts are currently staging-only. Production addresses not yet available. The staging Escrow (`0x5C2a8B...`) is different from the production Escrow (`0x2f121C...`).
 
-**Staging Indexer:** `https://indexer.hyperindex.xyz/00be13d/v1/graphql`
+**Staging Indexer:** `https://indexer-staging.zkp2p.xyz/v1/graphql`
 
 ---
 
@@ -267,7 +267,7 @@ query IntentStats($rateManagerId: String!) {
 ### Fetch from TypeScript
 
 ```typescript
-const INDEXER = "https://indexer.hyperindex.xyz/00be13d/v1/graphql";
+const INDEXER = "https://indexer-staging.zkp2p.xyz/v1/graphql";
 
 async function queryIndexer(query: string, variables: Record<string, any> = {}) {
   const res = await fetch(INDEXER, {
