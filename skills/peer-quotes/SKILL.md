@@ -32,7 +32,7 @@ Use `@zkp2p/sdk@0.14.0`. [The checked example](scripts/quotes.ts) requests exact
 - `all` belongs to orderbook browsing, not quote execution.
 - `whitelistEnabled: true` with empty `allowedGroupIds` does not mean public. `disputeProtectionRequiresStake`, `disputeProtectionOptedOut`, and automated-release flags are facts about a row, not proof of this user's access, locked coverage, or settlement.
 
-Use Peerlytics `getMarketSummary` or `getOrderbook` only for explicitly indicative market research. Label observation time, source, and liquidity scope. Never route an order using a market average or add percentages to simulate an executable quote.
+Use canonical ZKP2P indexer liquidity/orderbook records for explicitly indicative market research. Label observation time, source, and liquidity scope. Never route an order using a market average or add percentages to simulate an executable quote.
 
 ## Return a decision, not a price dump
 

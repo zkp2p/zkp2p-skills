@@ -1,8 +1,8 @@
 ---
 name: peer-analytics
-description: "Query Peerlytics for Peer protocol metrics, markets, attribution, and activity over explicit periods. Use for aggregate reports and bounded monitoring; read-only."
+description: "Query the canonical ZKP2P indexer for Peer metrics, attribution, and activity. Use for aggregate reports and bounded monitoring; Peerlytics links are for viewing only."
 license: MIT
-compatibility: "Node.js 22+; @peerlytics/sdk 4.0.0; existing Peerlytics API key and request budget."
+compatibility: "Node.js 22+; canonical ZKP2P indexer GraphQL access; @zkp2p/indexer-schema 0.22.0 for entity types."
 metadata:
   author: zkp2p
   reviewed: "2026-09-09"
@@ -10,35 +10,41 @@ metadata:
 
 # Peer protocol analytics
 
-Turn a question into a metric before querying: scope (protocol, maker, integrator, vault, rail), UTC start/end, status, unit, and comparison period. “How much volume?” must distinguish signaled, fulfilled, released, and fiat-paid amounts. Do not present one as another or extrapolate a short window without labeling it.
+The **ZKP2P indexer is the canonical data source** for this skill. Query it directly and derive reports from its records and aggregates. Peerlytics is an external web explorer for viewing details: do not use its API, SDK, scraped pages, cached metrics, or streaming service as report data. If indexer access fails, report the gap instead of falling back to another analytics source.
 
-## Query the current analytics client
+Turn the question into a metric first: scope (protocol, maker, integrator, rate manager, payment method), chain/environment, UTC start/end, status, unit, and comparison period. “Volume” must distinguish signaled, fulfilled, released, and actual fiat-paid amounts.
 
-Use `@peerlytics/sdk@4.0.0` and an existing API key supplied by the host. [The checked example](scripts/report.ts) fetches a windowed summary and one bounded activity page. API calls can consume credits; honor the existing access/budget. Do not create an x402 signer or authorize paid calls merely to produce a report. On missing credentials or quota, state the unavailable data rather than synthesizing a result.
+## Query the canonical indexer
 
-Current method names:
+Production GraphQL: `https://indexer.zkp2p.xyz/v1/graphql`. Use the configured canonical endpoint for another environment. Production accepted direct read-only requests without an auth header at review time; if access policy changes, use the host's existing indexer credentials. Never acquire paid access, disclose credentials, or substitute a retired HyperIndex endpoint to bypass a failure.
 
-- `getProtocolSummary({ from, to, compare: 'prior_period' })` for an explicit window. The no-argument overload is cumulative and is not equivalent.
-- `getProtocolOverview`, `getTimeseries`, `getLeaderboard` for trends and ranked contributors with declared scope.
-- `getMaker`, `getTaker`, `getIntegrator`, `getDeposit`, `getIntent` for a specific entity.
-- `getMarketSummary`, `getOrderbook`, `getCurrencies`, `getPlatforms` for market/catalog observations.
-- `getIntents`, `getDeposits`, `getActivity` for bounded records. Inspect the returned envelope, count, pagination, window, and `hasMore`; these are not bare arrays.
+Use `@zkp2p/indexer-schema@0.22.0` for entity types. Its domain SDL is not the live Hasura query schema: inspect the selected endpoint when constructing unfamiliar queries. The live API uses PascalCase entity roots, `where`, `order_by`, `limit`, and a `numeric` scalar for indexed big integers. Check both HTTP status and GraphQL `errors`; HTTP 200 with partial data is not a complete report.
 
-Retired `getSummary`, `getPeriod`, `getChunk`, `getAttribution`, and analytics `getQuote` examples must not be resurrected. Removed `lockScore`/taker-tier fields are not a current credit or eligibility score.
+[The checked example](scripts/report.ts) queries `GlobalDailyStats` with variables, a chain filter, a half-open UTC date window, unique-ID keyset pagination, a request timeout, and a finite page budget. Call `reportWindow({ from: "2026-09-01", to: "2026-09-08", chainId: 8453, pageSize: 100, maxPages: 2 })` for September 1–7 UTC. The example returns observed totals, source, dates, observation time, underlying rows, and completeness; it sends requests only when called.
 
-## Keep aggregation honest
+## Choose the entity that owns the metric
 
-1. Fetch a summary and inspect its resolved window. Use the same duration/status/units for comparisons. Distinguish zero events from an unavailable query.
-2. Preserve monetary integer strings/bigints and declared decimals. State whether fees and partial settlements are included. Do not sum formatted strings or percentages.
-3. Deduplicate by the entity/event key appropriate to the metric. A deposit offered in several currencies is one underlying inventory balance, not fresh liquidity per currency.
-4. Separate maker, taker, integrator, and referral attribution. Indexer `attributionCodes`/`attributionSource` encode transaction attribution; they are not interchangeable with the payment recipient or every address in a transaction.
-5. Record snapshot time, period, source, filters, limits, and truncation. A top-50 page is not the complete population. Use bounded pagination when a complete total is necessary, or explicitly report a sample.
-6. If an aggregate and receipt-level evidence disagree, investigate scope, finality/indexing delay, statuses, decimals, and duplicates before declaring a protocol fault.
+- **Daily protocol totals:** `GlobalDailyStats`, filtered by `chainId` and `dayTimestamp`. Sum period fields such as `fulfilledVolumeUsdCents` and `fulfilledIntentCount`, never cumulative fields. USD cents are the indexer's USDC-derived volume measure, not the customer's actual fiat payment. For sub-day boundaries, query the underlying intent records instead of including entire boundary days.
+- **Makers and payment methods:** use the appropriate maker/platform statistics, daily snapshots, or `DailyPlatformVolume`. Verify whether the field is a lifetime total or a period value. `Intent.owner` is the taker; attribute maker activity using the corresponding deposit or the owning maker aggregate.
+- **Available USDC inventory:** query `TokenLiquidity` for the exact chain and canonical USDC token. `DepositTokenLiquidity` provides its deduplicated per-deposit contributions. `CurrencyLiquidity` and `CurrencyPlatformLiquidity` describe overlapping currency/method views; summing them would count the same inventory several times.
+- **Intent activity and settlement:** query `Intent` by the appropriate event timestamp and status. Use `signalTimestamp` for signaling, `fulfillTimestamp` for fulfillment, and `pruneTimestamp` for pruning. `releasedAmount` is gross released token value; `amount` is the signaled amount. Separate `FULFILLED` from `MANUALLY_RELEASED` when the question concerns verified payment rather than any release. Preserve nullable payment/release fields as unknown, not zero.
+- **Attribution:** use canonical `attributionCodes` and `attributionSource` on deposits/intents. Deposit-creation attribution and intent attribution answer different questions. Do not relabel every address or referral-fee recipient as the integrator.
 
-## Monitor with a defined stopping condition
+For new breakdowns, inspect the live fields and their indexer definitions before building a query. An executable quote still comes from the quote workflow; indexed orderbook or liquidity rows are observations, not reservations or guarantees of buyer eligibility.
 
-`getActivity` returns `events`, `hasMore`, and `nextCursor`. That cursor walks older history; it is not a forward live-stream cursor. For polling, fetch a recent bounded window, deduplicate durable event IDs, and distinguish historical backfill from new alerts. Use `streamActivity` only with API-key authentication and an abort signal; x402 does not support that stream. A one-time report must not silently create a daemon or outbound notification schedule.
+## Keep aggregation and coverage explicit
 
-Return the answer first, followed by the period, definitions, source and observation time, comparison, and material coverage limits. Interpret changes cautiously: correlation or a leaderboard position does not establish the reason users behaved differently.
+1. Use `[start, end)` UTC windows consistently across comparisons. Big-integer timestamps are Unix seconds; JavaScript dates are milliseconds. Keep money as integer strings/bigints and label cents, token units, or fiat units before formatting.
+2. Deduplicate using the entity's full ID. Preserve chain/escrow identity across contract generations. Paginate in a stable order with a strict keyset; do not switch to offsets for a changing dataset.
+3. Do not add daily distinct-maker counts to claim distinct makers for a week. Union actual maker identities over the period, or report the daily counts separately. Retain the indexer's field-specific rounding when summing daily money aggregates.
+4. A page budget exhausted means a partial observed result. In the example, `complete` means the filtered query was exhausted, not that chain indexing is current. `nextAfterId` identifies the last included row for further query design; it is not a live-stream cursor.
+5. Record source endpoint, chain/environment, filters, period, query time, returned `updatedAt` values, and limits. `updatedAt` is the record's last update, not proof of the indexer's chain head. An ongoing day, reindex, backfill, or lag can make a snapshot provisional. A missing day/row alone does not prove zero activity.
+6. For monitoring, use a bounded timestamp window and stable event position/ID cursor supported by the selected entity. Re-query an overlap window and deduplicate when records can change. A one-time report does not create a daemon or notification schedule.
 
-Sources: [published analytics SDK](https://www.npmjs.com/package/@peerlytics/sdk), [indexer domain schema](https://www.npmjs.com/package/@zkp2p/indexer-schema).
+## Link to details without changing the source
+
+For an intent hash returned by the indexer, attach `https://peerlytics.xyz/explorer/intent/<intentHash>` as a **View in explorer** link. [Example intent page](https://peerlytics.xyz/explorer/intent/0x09e6e5750c3dc5a66300c0a35dec742b91e4018439563dcff86cbecdc2dd3674). The checked `intentExplorerLink` helper validates and formats the hash without making a request. Do not label the explorer as the source of the metric; report numbers remain sourced to the indexer. Verify other explorer route formats before emitting them.
+
+Return the answer first, then metric definitions, UTC period, indexer provenance, comparison, and material coverage limits. Link relevant individual records for inspection. A leaderboard or correlation does not establish why activity changed.
+
+Source: [published indexer domain schema](https://www.npmjs.com/package/@zkp2p/indexer-schema).
