@@ -1,55 +1,41 @@
 ---
 name: look-up-peer-data
-description: Look up any deposit, intent, address, maker, or verifier on the Peer protocol. Search transactions, check address history, inspect maker portfolios, and view verifier stats. Use when someone asks to find or inspect on-chain Peer data.
+description: Trace a Peer intent, deposit, or transaction and explain pending, partial, expired, or fulfilled state using indexed records and on-chain evidence.
+license: MIT
+compatibility: "@zkp2p/sdk 0.14.0; optional @zkp2p/indexer-schema 0.22.0; environment-specific RPC and indexer access."
+metadata:
+  author: zkp2p
+  reviewed: "2026-09-09"
 ---
 
-# Look Up Peer Data
+# Explain what happened to a Peer order
 
-## What You Can Look Up
+Use this for one concrete incident or a bounded set of related deposits/intents. Establish the chain/environment and supplied identifier first. A transaction hash, intent hash, and composite deposit ID are different keys; a numeric deposit ID needs its escrow address. Do not infer identity by searching unrelated wallets.
 
-Search and inspect any entity on the Peer protocol:
+## Reconstruct the lifecycle
 
-- **Deposits** -- balance, status, payment methods, linked intents
-- **Intents** -- amount, lifecycle (signal -> fulfill/prune), related intents
-- **Addresses** -- role detection (maker/taker/both), volume stats, full activity
-- **Makers** -- portfolio summary, per-deposit APR, currency/platform allocations
-- **Verifiers** -- throughput stats, currency breakdown, top takers/makers
-- **History** -- maker fulfillment speed, taker trust tier progression
+Use `@zkp2p/sdk@0.14.0` for protocol/indexer reads and `@zkp2p/indexer-schema@0.22.0` for current entity types. [The checked example](scripts/trace.ts) uses the supported indexer wrappers. Configure a read-only wallet address, chain/RPC, and runtime environment; indexer credentials, if needed, remain in the host's secret store. Do not use a retired HyperIndex URL from another environment.
 
-## Quick Example
+1. If given a transaction, fetch it and its receipt from that chain. Record status, block, sender, destination contract, and decoded relevant events using the matching deployed ABI. A transaction being found or mined is not enough: check receipt success. If pending/unknown, say so before treating missing events as absence.
+2. Look up an intent with `client.indexer.getIntentByHash(hash)` or deposit with `getDepositById(id, { includeIntents: true })`. For an owner-scoped question use a bounded `getOwnerIntents`/deposit query. Preserve full IDs returned by the indexer rather than rebuilding them from obsolete SDK comments.
+3. Follow intent → escrow/deposit → owner/recipient → signal, fulfillment, cancellation/prune, and extension events. Read the actual on-chain intent via `client.getIntent` where applicable; it can be absent after settlement/pruning, so a missing active record does not erase receipt history.
+4. Reconcile token amount, fiat obligation, verified payment, released amount, fees, timestamps, and recipient. Money fields are integer strings/bigints with schema-defined decimals. Do not convert arbitrary monetary values through JavaScript `Number`.
+5. Compare indexed observation with confirmed receipts/live contract state. Record the latest indexed evidence/block available. If the indexer lags, retry bounded reads; a lagging null is inconclusive, not a failed transaction or permission to replay it.
 
-```typescript
-import { Peerlytics } from '@peerlytics/sdk';
+## Diagnose the actual state
 
-const client = new Peerlytics({ apiKey: process.env.PEERLYTICS_API_KEY });
+- **Awaiting buyer:** a deposit exists but no active matching intent. Investigate available liquidity, rates, fill limits, currency/rail, acceptance, and access policy; balance alone does not prove it is quotable.
+- **Matched/locked:** a live intent reserves funds. Check its actual expiry and payment status. Time passing is not proof of an emitted prune event.
+- **Proof rejected:** compare payment recipient, currency, amount, timestamp, provider status, and intent binding. Preserve sensitive capture material privately; do not paste bank responses/cookies into a ticket.
+- **Partially filled:** distinguish deposit-wide progress from the one intent's settlement. Do not claim the whole deposit paid because one fill fulfilled.
+- **Fulfilled:** cite the fulfillment receipt and released value. If a bridge/destination route remains, show it as a separate state. For manually released funds, label that release mechanism; it is not proof that an attestor verified fiat.
+- **Cancelled/pruned:** explain unlocked USDC and any independent fiat payment evidence. Cancellation does not prove a bank payment was reversed.
+- **Extended:** use the escrow's canonical updated expiry; guardian payment alone is not the final expiry record.
 
-// Search any address, tx hash, or deposit ID
-const results = await client.search('0xabc...def');
+For raw GraphQL, inspect the owning live schema and credentials first. The published domain SDL supplies entity types; it is not a promise that raw audit-event fields or generated Hasura root names match an old query. Prefer SDK wrappers for supported reads.
 
-// Get a maker's portfolio
-const maker = await client.getMaker('0xmaker...');
-console.log(`${maker.summary.activeDeposits} active deposits, $${maker.summary.totalProfitUsd} profit`);
+## Return a forensic receipt
 
-// Check a taker's trust tier
-const taker = await client.getTakerHistory('0xtaker...');
-console.log(`Tier: ${taker.stats.tier}, score: ${taker.stats.lockScore}`);
-```
+Give the verdict and uncertainty, chain/environment, exact identifiers, ordered events with timestamps/transaction links, money reconciliation, and the smallest next step. Recommend a write only after proving the state and its required authority. This diagnostic skill does not cancel, prune, extend, refund, or retry a transfer merely because an order looks stuck.
 
-## Available Lookups
-
-| What | Method | Returns |
-|------|--------|---------|
-| Universal search | `search(query)` | Matching intents, deposits, linked activity |
-| Deposit detail | `getDeposit(id)` | Balance, intents, payment details, maker's other deposits |
-| Intent detail | `getIntent(hash)` | Amount, lifecycle, related intents |
-| Address profile | `getAddress(addr)` | Stats, all activity by role |
-| Maker portfolio | `getMaker(addr)` | Summary, per-deposit breakdown, allocations |
-| Verifier stats | `getVerifier(addr)` | Throughput, currency breakdown, top participants |
-| List deposits | `getDeposits(filters)` | Filtered deposit list with USD values |
-| List intents | `getIntents(filters)` | Filtered intent list with lifecycle data |
-| Maker history | `getMakerHistory(addr)` | Deposit/intent stats, fulfillment speed |
-| Taker history | `getTakerHistory(addr)` | Intent stats, trust tier, progression |
-
-## Full Implementation
-
-See **[peer-explorer](../peer-explorer/SKILL.md)** for complete SDK setup, all endpoint signatures, response types, pagination patterns, and error handling.
+Sources: [SDK reference](https://docs.peer.xyz/developer/sdk/client-reference), [indexer schema package](https://www.npmjs.com/package/@zkp2p/indexer-schema), [contracts](https://github.com/zkp2p/zkp2p-contracts).

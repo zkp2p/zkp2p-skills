@@ -1,120 +1,44 @@
 ---
 name: pay-humans-fiat
-description: Pay humans in their local fiat currency (USD, EUR, GBP, etc.) from your USDC balance. Cheaper and faster than Stripe or PayPal. No KYC required. Use when the agent needs to pay a freelancer, send a bank transfer, pay for a real-world service, or compensate a human worker.
+description: Cash out USDC to a bank or payment app with Peer Cash. Use for fiat payouts, cash-out integration, and resuming a partial or stuck cash-out.
+license: MIT
+compatibility: "Node.js 22+; @zkp2p/cash 0.5.2; host wallet and Base RPC; browser identity flow for some payees."
+metadata:
+  author: zkp2p
+  reviewed: "2026-09-09"
 ---
 
-# Pay Humans in Fiat
+# Cash out to fiat
 
-Agent has USDC. Human wants dollars, euros, or pounds in their bank account, Venmo, Wise, or Revolut. This skill bridges that gap -- the agent spends USDC, the human receives fiat. No bank account needed on the agent side.
+Use this when someone holds crypto and wants fiat delivered to a specified payment account. Peer Cash turns their Base USDC into a maker deposit: a buyer sends fiat to the payee, proves the payment, and receives USDC. A cash-out can fill in pieces. An estimate is neither a bank transfer nor a settlement guarantee.
 
-## Why Not Stripe or PayPal?
+## Gather the actual payout instruction
 
-| Method | Fee | Settlement | KYC Required | Agent-Native |
-|--------|-----|------------|:---:|:---:|
-| Stripe Connect | 2.9% + $0.30 | 2-3 business days | Yes | No |
-| PayPal Payouts | 2% | 1-3 business days | Yes | No |
-| Wire Transfer | $15-45 flat | 1-5 business days | Yes | No |
-| **Peer Protocol** | **~1% spread** | **Minutes** | **No** | **Yes** |
+Resolve environment, amount, source chain/token, platform, currency, payee, and the authorized funding wallet. Reuse authorization already given for that exact payout; ask only for missing decisions. Never infer a recipient from an example or add a referral fee/code of your own. Keep account details in the host's private storage, out of transcripts and committed fixtures.
 
-Agents cannot complete KYC. They have no government ID, no SSN, no selfie. Peer Protocol requires none of that -- it is pure on-chain escrow with off-chain fiat settlement proven via zkTLS.
+Use `@zkp2p/cash@0.5.2` and a host-supplied wallet. Start with canonical Base USDC; routed assets add a separate funding leg. Read [the checked example](scripts/cashout.ts) for exact calls and types. Install dependencies in the consuming project with its package manager; no script here executes on import.
 
-## How It Works
+## Execute the lifecycle
 
-```
-1. FIND LP        Agent queries for a liquidity provider offering the best rate
-2. LOCK USDC      Agent locks USDC in an on-chain escrow contract
-3. LP SENDS FIAT  LP sends fiat to the human's payment account (Venmo, Wise, bank, etc.)
-4. PROOF + SETTLE LP proves payment via zkTLS, escrow releases USDC to LP
-```
+1. Call `cash.capabilities()` for the selected environment. Check the exact platform/currency pair, amount bounds, payee format, pricing mode, and attestation requirement. The default catalog does not prove live liquidity. UPI is a staging opt-in, not a production promise.
+2. Call `cash.estimate({ amount, currency }, { includeEta: false })` before registering a payee. Report the estimate and variable fill time. Most corridors bind a rate when an intent is signaled; Alipay/CNY snapshots a creation-time rate. Use the returned corridor pricing, not one global assumption.
+3. Register/prove the specified payee through the existing identity flow where required. New Wise, PayPal, and Alipay payees can require a browser identity attestation. `PAYEE_VERIFICATION_REQUIRED` is an unmet prerequisite; do not substitute dummy proof or put session cookies in code.
+4. For a host-controlled signer, call `cash.prepare(input)`. **This registers payee details with the curator**, although it does not broadcast. Review every returned `txs[]` with its matching `steps[]`, including chain, spender, value, token amount, and target. Submit sequentially through the authorized wallet and confirm each receipt. Do not infer that every prepared plan contains exactly two transactions.
+5. Pass the confirmed **createDeposit** receipt to `cash.finalizePreparedCashout(receipt)`. Persist the returned `depositId`, transaction hash, chain/environment, and owning account before subsequent work. The Cash resume key is `escrowAddress_onchainId`; keep the returned string rather than rebuilding it from a bare number.
+6. For **every** `accessPolicyPaymentMethods` entry, submit `cash.prepareAccessPolicy(depositId, paymentMethod)` from the deposit owner's wallet and confirm it. Restricted legs require this post-creation policy; creation and policy are not atomic. Do not advertise the order as fully configured while any required policy is missing. If a policy fails, resume policy setup on the existing deposit.
+7. Poll `cash.order(depositId)` or use `watch` with an abort signal and timeout. Report partial fills and `nextActions`. Distinguish `fiatOwed` from verified `fiatPaid`, payment ID, and released USDC. Completion is verified delivery, not the initial optimistic `awaiting-buyer` snapshot.
 
-Result: the human gets fiat, the agent's USDC covers it. The agent never touches fiat rails and does not generate any proofs -- the LP handles that.
+`cash.cashout(input, { signer })` performs the signed convenience path when the existing wallet and authorization permit it. It has the same persistence and recovery obligations.
 
-## Supported Payment Platforms
+## Recover without sending twice
 
-| Platform | Regions | Example Currencies |
-|----------|---------|--------------------|
-| Venmo | US | USD |
-| CashApp | US | USD |
-| Zelle | US | USD |
-| PayPal | Global | USD, EUR, GBP, AUD |
-| Wise | Global | USD, EUR, GBP, INR, BRL, 35+ |
-| Revolut | EU/UK/US | EUR, GBP, USD |
-| Monzo | UK | GBP |
-| N26 | EU | EUR |
-| MercadoPago | LATAM | BRL, ARS, MXN |
+- A timeout after broadcast is an unknown outcome. Find the transaction by wallet/nonce/hash and inspect its receipt before creating another deposit. An empty indexer result alone is not proof that broadcast failed.
+- If creation succeeded but the indexer lags, retain receipt-derived state and retry reads with a bound. Never manufacture a second order to make it visible.
+- Withdraw only when requested: `prepareWithdraw`/`withdraw` unwind unlocked funds and handle expired intents. Live locked funds cannot be withdrawn. A partial withdrawal can succeed while another fill remains active. `NOTHING_TO_WITHDRAW` does not imply all fiat was delivered.
+- For source routing, retain the provider request ID and origin/destination transaction evidence separately. If bridging completed but cash-out creation failed, resume from the received Base USDC; do not bridge again. Unsigned `prepare` is the Base USDC path, not a generic unsigned bridge executor.
 
-## Quick Example
+## Return a receipt
 
-```typescript
-import { OfframpClient } from '@zkp2p/sdk';
+Report environment, deposited USDC, platform/currency, masked payee, deposit ID, transaction hashes, access-policy status, delivered/remaining amounts, and the next actionable state. Never call locked funds returned or an estimated payout paid.
 
-const client = new OfframpClient({
-  walletClient,           // viem wallet on Base
-  chainId: 8453,
-  runtimeEnv: 'production',
-  apiKey: process.env.ZKP2P_API_KEY,
-});
-
-// 1. Find best LP for Venmo/USD
-const quote = await client.getQuote({
-  paymentPlatforms: ['venmo'],
-  fiatCurrency: 'USD',
-  user: agentAddress,
-  recipient: agentAddress,
-  destinationChainId: 8453,
-  destinationToken: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-  amount: '150000000',    // 150 USDC (6 decimals)
-});
-
-// 2. Approve USDC to escrow
-await client.ensureAllowance({
-  token: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-  amount: 150_000000n,
-});
-
-// 3. Lock USDC and tell the LP who to pay
-const intentTx = await client.signalIntent({
-  depositId: quote.depositId,
-  amount: '150000000',
-  toAddress: agentAddress,
-  processorName: 'venmo',
-  payeeDetails: quote.payeeDetails,
-  fiatCurrencyCode: 'USD',
-  conversionRate: quote.conversionRate,
-});
-// Done. LP sends fiat to the human, proves it, and collects the escrowed USDC.
-```
-
-## Cost Example
-
-To pay a freelancer **$150 via Venmo**:
-
-- Agent spends: ~152 USDC (1.3% spread)
-- Freelancer receives: $150 in their Venmo account
-- Settlement time: minutes
-- Gas cost: <$0.01 (Base L2)
-
-## Full Implementation Details
-
-See the **`peer-offramp`** skill for the complete SDK reference, including:
-
-- Payee detail hashing and registration
-- Intent monitoring and fulfillment polling
-- Intent cancellation and USDC recovery
-- Rate selection strategy
-- Direct indexer queries (GraphQL)
-- Error handling and edge cases
-
-## Environment Variables
-
-```bash
-export PRIVATE_KEY="0x..."        # Agent wallet private key (Base)
-export ZKP2P_API_KEY="..."        # ZKP2P API key for LP queries
-```
-
-## Key Contracts (Base Mainnet)
-
-| Contract | Address |
-|----------|---------|
-| Escrow | `0x2f121CDDCA6d652f35e8B3E560f9760898888888` |
-| USDC | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` |
+Sources: [Peer Cash guide](https://docs.peer.xyz/developer/peer-cash), [published package](https://www.npmjs.com/package/@zkp2p/cash), [cash lifecycle](https://github.com/zkp2p/peer-cash/blob/main/docs/lifecycle-and-recovery.md).
