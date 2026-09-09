@@ -1,6 +1,6 @@
 ---
-name: accept-fiat-payments
-description: Integrate Peer Pay checkout to collect fiat payments and settle crypto. Use for payment links, merchant orders, signed webhooks, and fulfillment.
+name: peer-checkout
+description: "Create Peer Pay checkout orders and integrate merchant payment links, signed webhooks, and order fulfillment."
 license: MIT
 compatibility: "Server-side Node.js; @zkp2p/pay-sdk 4.0.1; merchant API key, configured API/checkout origins, webhook endpoint."
 metadata:
@@ -8,7 +8,7 @@ metadata:
   reviewed: "2026-09-09"
 ---
 
-# Collect a payment with Peer Pay
+# Peer Pay checkout orders
 
 Use hosted checkout when a merchant wants customers to pay through supported rails and receive crypto settlement. An order, a payment attempt, and settlement are separate records. Use the merchant API; do not improvise a maker deposit as a merchant checkout.
 

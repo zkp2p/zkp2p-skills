@@ -1,6 +1,6 @@
 ---
-name: look-up-peer-data
-description: Trace a Peer intent, deposit, or transaction and explain pending, partial, expired, or fulfilled state using indexed records and on-chain evidence.
+name: peer-protocol-trace
+description: "Investigate a specific Peer intent, deposit, or transaction using indexer records and on-chain receipts. Use for lifecycle diagnosis and reconciliation; read-only."
 license: MIT
 compatibility: "@zkp2p/sdk 0.14.0; optional @zkp2p/indexer-schema 0.22.0; environment-specific RPC and indexer access."
 metadata:
@@ -8,7 +8,7 @@ metadata:
   reviewed: "2026-09-09"
 ---
 
-# Explain what happened to a Peer order
+# Trace Peer intents, deposits, and transactions
 
 Use this for one concrete incident or a bounded set of related deposits/intents. Establish the chain/environment and supplied identifier first. A transaction hash, intent hash, and composite deposit ID are different keys; a numeric deposit ID needs its escrow address. Do not infer identity by searching unrelated wallets.
 

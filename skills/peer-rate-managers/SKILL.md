@@ -1,6 +1,6 @@
 ---
-name: manage-peer-vault
-description: Create or operate a Peer rate-manager vault and delegate maker pricing. Use for manager fees, deposit floors, rate updates, and delegation checks.
+name: peer-rate-managers
+description: "Create and manage Peer rate managers (pricing vaults), set rates and fees, and assign or clear deposit rate-manager delegation."
 license: MIT
 compatibility: "@zkp2p/sdk 0.14.0 and viem 2.x; configured Base deployment; authorized manager or depositor wallet."
 metadata:
@@ -8,7 +8,7 @@ metadata:
   reviewed: "2026-09-09"
 ---
 
-# Manage a Peer pricing vault
+# Peer rate managers
 
 A Peer vault is a rate manager for maker deposits. It is not an ERC-4626 pooled asset vault: delegation does not mint shares or transfer custody of the maker's USDC to the manager. Keep deposit ownership, delegate/controller authority, manager identity, and fee recipient distinct.
 

@@ -1,6 +1,6 @@
 # Peer skills
 
-Nine agent skills for using and building on [Peer](https://peer.xyz): move between fiat and crypto, accept customer payments, provide liquidity, manage pricing, investigate orders, and measure activity.
+Nine agent skills for using and building on [Peer](https://peer.xyz): create cash-outs, signal and fulfill intents, create checkout orders, request quotes, manage deposits and rate managers, trace transactions, query analytics, and build provider templates.
 
 Each skill is a complete use case with its own instructions and supporting files. Install only the workflows you need. Examples use published SDKs and the host's existing wallet or credentials; importing an example does not send a transaction.
 
@@ -10,7 +10,7 @@ With Node.js 22.20+ and the [Skills CLI](https://skills.sh/docs):
 
 ```sh
 npx skills add zkp2p/zkp2p-skills --list
-npx skills add zkp2p/zkp2p-skills --skill pay-humans-fiat
+npx skills add zkp2p/zkp2p-skills --skill peer-cashout
 ```
 
 Choose your agent and project/global scope in the installer. List first instead of installing every skill. To check existing installations:
@@ -24,15 +24,17 @@ npx skills update
 
 | Skill | Use it when | Result |
 | --- | --- | --- |
-| [pay-humans-fiat](skills/pay-humans-fiat/SKILL.md) | Cash out crypto to a bank or payment app | A resumable cash-out with verified delivery and recovery steps |
-| [fiat-to-crypto](skills/fiat-to-crypto/SKILL.md) | Buy crypto or integrate the buyer journey | Quote, confirmed intent, Buyer TEE proof, settlement evidence |
-| [accept-fiat-payments](skills/accept-fiat-payments/SKILL.md) | Collect customer payments | Merchant checkout and authenticated, idempotent fulfillment |
-| [check-fx-rates](skills/check-fx-rates/SKILL.md) | Compare what a wallet can actually execute | Comparable live quotes with fees, expiry, and eligibility |
-| [provide-peer-liquidity](skills/provide-peer-liquidity/SKILL.md) | Sell USDC as a maker | Verified payees, deposit terms, inventory, and safe unwind |
-| [manage-peer-vault](skills/manage-peer-vault/SKILL.md) | Operate or delegate a pricing vault | Correct rate/fee changes and verified delegation |
-| [look-up-peer-data](skills/look-up-peer-data/SKILL.md) | Explain a stuck or completed order | A bounded trace across indexed records and chain receipts |
-| [analyze-peer-protocol](skills/analyze-peer-protocol/SKILL.md) | Measure volume, participants, or activity | A report with explicit periods, attribution, and coverage |
-| [create-zkp2p-provider](skills/create-zkp2p-provider/SKILL.md) | Add a payment or identity capture flow | A provider template and a tested attestation path |
+| [peer-cashout](skills/peer-cashout/SKILL.md) | Create or resume a cash-out through Peer Cash | Deposit-backed fiat delivery, fill tracking, and recovery |
+| [peer-intents](skills/peer-intents/SKILL.md) | Signal or fulfill a buyer intent in the onramp flow | Confirmed intent, Buyer TEE proof, and settlement evidence |
+| [peer-checkout](skills/peer-checkout/SKILL.md) | Create a Peer Pay merchant checkout order | Payment link and authenticated, idempotent order fulfillment |
+| [peer-quotes](skills/peer-quotes/SKILL.md) | Request or compare quotes for a buyer wallet | Executable pricing, fees, expiry, and eligibility; read-only |
+| [peer-deposits](skills/peer-deposits/SKILL.md) | Create or manage an escrow deposit directly | Payees, payment methods, rates, fill limits, and withdrawals |
+| [peer-rate-managers](skills/peer-rate-managers/SKILL.md) | Create or manage a rate manager (pricing vault) | Rates, fees, and deposit delegation |
+| [peer-protocol-trace](skills/peer-protocol-trace/SKILL.md) | Investigate a specific intent, deposit, or transaction | Indexed and on-chain lifecycle reconciliation; read-only |
+| [peer-analytics](skills/peer-analytics/SKILL.md) | Query protocol metrics and activity over a period | Aggregate reports with explicit attribution and coverage; read-only |
+| [peer-provider-templates](skills/peer-provider-templates/SKILL.md) | Build or update a provider capture template | Request matching, metadata extraction, and verified attestations |
+
+Choose `peer-cashout` for the Cash SDK's complete cash-out lifecycle; choose `peer-deposits` for direct escrow configuration and management. `peer-quotes` only requests pricing, while `peer-intents` covers buyer execution. `peer-protocol-trace` investigates individual records; `peer-analytics` measures activity across a defined scope and period.
 
 No generic token-transfer skill, duplicate API-reference skills, or unattended rate optimizer is bundled. A Peer pricing vault is not an ERC-4626 yield vault. A fiat payout, payment proof, and token settlement are distinct states.
 
@@ -54,21 +56,26 @@ The SDK currently depends on contracts `0.4.1-rc.9`; a newer package tag is not 
 
 For consuming projects, install the dependencies named by the selected skill with that project's package manager. Skills are instructions, not managed wallet services. Use existing task authorization and secret storage; do not ask the user to paste private keys into a conversation. Examples prepare or perform the documented work only when called explicitly by the host. Preparation can still register a payee or request an attestation, as noted in the relevant skill.
 
-## Upgrade from the old catalog
+## Upgrade from earlier names
 
-The old 22-entry catalog has been replaced. Update the workflows you use, then inspect your agent's installed skills: updating the repository may not remove locally installed retired names. Remove retired entries with `npx skills remove <old-name>` in the same project/global scope, and install the replacement. Review the CLI's selection before removal.
+The nine workflows now use protocol and SDK terms. Earlier names such as `pay-humans-fiat`, `provide-peer-liquidity`, and `check-fx-rates` are retired. The workflows and bundled examples are preserved; directories, descriptions, and discovery headings have changed.
 
-| Retired name(s) | Replacement |
+Install the replacement you use, then inspect the agent's installed skills. A repository update may not remove old local names. Remove retired entries with `npx skills remove <old-name>` in the same project/global scope. Review the CLI's selection before removal.
+
+| Retired name(s) | Current skill |
 | --- | --- |
-| `peer-offramp`, `peer-transfer` | `pay-humans-fiat` |
-| `peer-onramp` | `fiat-to-crypto` |
-| `peer-checkout` | `accept-fiat-payments` |
-| `peer-lp`, `earn-on-idle-usdc` | `provide-peer-liquidity` |
-| `peer-vault`, `earn-as-defi-manager`, `peer-rate-optimizer` | `manage-peer-vault` |
-| `peer-market` | `check-fx-rates` |
-| `peer-explorer` | `look-up-peer-data` |
-| `peer-analytics`, `peer-activity`, `monitor-peer-activity` | `analyze-peer-protocol` |
+| `pay-humans-fiat`, `peer-offramp`, `peer-transfer` | `peer-cashout` |
+| `fiat-to-crypto`, `peer-onramp` | `peer-intents` |
+| `accept-fiat-payments` | `peer-checkout` |
+| `provide-peer-liquidity`, `peer-lp`, `earn-on-idle-usdc` | `peer-deposits` |
+| `manage-peer-vault`, `peer-vault`, `earn-as-defi-manager`, `peer-rate-optimizer` | `peer-rate-managers` |
+| `check-fx-rates`, `peer-market` | `peer-quotes` |
+| `look-up-peer-data`, `peer-explorer` | `peer-protocol-trace` |
+| `analyze-peer-protocol`, `peer-activity`, `monitor-peer-activity` | `peer-analytics` |
+| `create-zkp2p-provider` | `peer-provider-templates` |
 | `send-usdc` | Use your wallet's ordinary transfer tooling |
+
+`peer-checkout` and `peer-analytics` also appeared in the original 22-entry catalog. If those names are already installed from that version, update or reinstall them from this repository to receive the current workflows. They are active names, not entries to remove.
 
 ## Validation and maintenance
 

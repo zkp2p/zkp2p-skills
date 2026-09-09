@@ -1,6 +1,6 @@
 ---
-name: check-fx-rates
-description: Compare executable Peer quotes for a specific fiat amount, wallet, and payment rail. Use for pricing, route choice, and quote eligibility checks.
+name: peer-quotes
+description: "Request and compare executable Peer quotes for a buyer wallet, amount, and payment method. Use for fees, quote expiry, and eligibility; read-only."
 license: MIT
 compatibility: "@zkp2p/sdk 0.14.0 and viem 2.x; buyer address; network access to the configured curator."
 metadata:
@@ -8,7 +8,7 @@ metadata:
   reviewed: "2026-09-09"
 ---
 
-# Compare the price someone can execute
+# Peer quotes
 
 Answer “what will I receive?” with live quotes for the actual trade. A market summary, oracle price, and executable quote answer different questions. Peer rates are generally fiat units per USDC; a higher maker rate costs a buyer more fiat. Invert only when explicitly displaying the other direction and label the units.
 

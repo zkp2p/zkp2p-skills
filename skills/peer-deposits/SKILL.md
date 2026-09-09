@@ -1,6 +1,6 @@
 ---
-name: provide-peer-liquidity
-description: Create and manage Peer maker deposits to sell USDC for fiat. Use for liquidity provision, minimum rates, inventory, and safe deposit withdrawals.
+name: peer-deposits
+description: "Create and manage Peer escrow deposits through the protocol SDK: configure payees, payment methods, currencies, minimum rates, fill limits, and withdrawals."
 license: MIT
 compatibility: "@zkp2p/sdk 0.14.0 and viem 2.x; maker wallet; verified payee registration and Base RPC."
 metadata:
@@ -8,9 +8,9 @@ metadata:
   reviewed: "2026-09-09"
 ---
 
-# Provide liquidity and receive fiat
+# Peer escrow deposits
 
-A maker deposits USDC into escrow, offers fiat payment methods, and receives buyer payments. This is inventory and payment operations with fill, access, and dispute constraints. Do not describe it as guaranteed yield, an interest-bearing deposit, or idle USDC earning automatically.
+Use this for direct creation and management of protocol escrow deposits. A maker deposits USDC into escrow, configures fiat payment methods, and receives buyer payments. This is inventory and payment operations with fill, access, and dispute constraints. Do not describe it as guaranteed yield, an interest-bearing deposit, or idle USDC earning automatically.
 
 ## Design a deposit the maker can operate
 
