@@ -1,127 +1,44 @@
 ---
 name: fiat-to-crypto
-description: Convert fiat currency (USD, EUR, GBP, etc.) to USDC on Base. Agent-autonomous on-ramp via Wise, Venmo, Revolut, PayPal. No KYC, no exchange account needed. Use when the agent needs to buy crypto, replenish on-chain balance, convert bank funds to USDC, or fund a wallet.
+description: Buy crypto with bank or payment-app funds through Peer. Use for onramp integration, intent signaling, and Buyer TEE payment-proof fulfillment.
+license: MIT
+compatibility: "Browser with Peer extension; @zkp2p/sdk 0.14.0; host wallet and selected environment RPC."
+metadata:
+  author: zkp2p
+  reviewed: "2026-09-09"
 ---
 
-# Fiat to Crypto (Buy USDC)
+# Buy crypto with fiat
 
-Agent needs USDC on Base but only has access to fiat payment platforms -- a Wise account, Venmo balance, PayPal Business, etc. Traditional on-ramps are not an option.
+The buyer pays fiat to a quoted maker and receives crypto after payment verification. Use this skill for the buyer journey or its integration. Do not turn a request to cash out crypto into a buyer intent.
 
-## The Problem
+## Establish the order
 
-Exchanges require identity verification: photo ID, SSN, selfie checks, address proof. Agents cannot complete KYC. They need a permissionless path from fiat to USDC that runs entirely over APIs.
+Resolve environment, buyer wallet, receiving address, payment platform/currency, and either exact fiat spend or exact token output. Reuse existing spending authorization for that bounded order. Use `@zkp2p/sdk@0.14.0`; construct `Zkp2pClient` with the host wallet, Base chain ID `8453`, and the explicit runtime environment. Let the SDK choose the matching API/contracts; a website rebrand does not change API origins.
 
-## Why Not Coinbase or Binance?
+1. Fetch a fresh `client.getQuote` with buyer and recipient addresses, destination chain/token, payment platforms, currency, amount, and `isExactFiat`. Fiat quote amounts are integer strings with 6 decimals. Token amounts use the destination token's decimals. Never calculate a binding order from an FX midpoint.
+2. For ordinary executable discovery, use `mode: 'eligible'`. If the user specifically wants staked chargeback-protected liquidity, use `eligible_with_chargeback_staked` and the actual buyer wallet. `eligible_with_chargeback` is discovery and may include insufficient-stake results. Whitelist and protection labels alone do not prove this buyer can signal.
+3. Inspect success, quote expiry, full fees, output, payee, escrow, orchestrator, and eligibility. If no acceptable quote exists, report that or ask about a material amount/platform change; never silently expand spending or choose a nearby amount.
+4. Prepare `client.signalIntent.prepare` with the selected quote's intent and conversion rate, pinning its escrow/orchestrator when provided. Simulate/submit through the host's authorized wallet. Persist the confirmed intent hash and signal transaction before opening the fiat payment step. If signaling reverts or the quote expires, refresh; do not ask the buyer to pay against an unconfirmed intent.
+5. Show the exact fiat amount, currency, recipient details, memo if required, and live intent expiry from the confirmed order. Payment is performed in the user's authenticated bank/payment app. A screenshot or “sent” message is not payment proof.
 
-| Method | KYC Required | Agent-Autonomous | Speed | Min Amount |
-|--------|:---:|:---:|-------|-----------|
-| Coinbase | Yes (photo ID, SSN) | No | Hours-days | $1 |
-| Binance | Yes (photo ID) | No | Hours-days | $10 |
-| MoonPay / Transak | Yes (photo ID) | No | Minutes-hours | $20 |
-| **Peer Protocol (ZKP2P)** | **No** | **Yes (Wise, PayPal)** | **Minutes** | **~$10** |
+## Capture and fulfill the same payment
 
-ZKP2P matches the agent with a human LP who has USDC locked in escrow. The agent sends fiat, proves payment cryptographically, and receives USDC on Base. No identity, no exchange account, no custodian.
+Use the existing browser integration. Read [the official capture guide](https://docs.peer.xyz/onramp-llm.md) for `createPeerExtensionSdk`, extension state/version checks, listener registration, and provider-specific action configuration. Register the metadata listener **before** calling `authenticate`. If the browser or required provider is unavailable, report the missing integration; do not invent a headless credential bypass.
 
-## How It Works
+- Match the metadata message to the active request ID, platform, and unexpired capture; unregister the listener on completion or cancellation. Never reuse a message from another order.
+- Bind selection to the expected payment ID, amount, currency, and recipient from this order. Reject ambiguous rows. A hidden row must not be selected. Use the provider row's `originalIndex`, never its index after filtering or sorting.
+- Pass the selected row's `params` and captured `encryptedSessionMaterial` into a `proofType: 'buyerTee'` proof. Include `index` only when the current provider configuration requires it. Do not merge params from a different capture/order.
+- [The checked proof helper](scripts/payment-proof.ts) demonstrates strict row matching and proof construction. It does not authenticate a bank, select a transaction automatically, or prove settlement.
+- Call `client.fulfillIntent.prepare({ intentHash, proof })` or the signed `fulfillIntent` path under the existing order authorization. Attestation calls are external work; prepared fulfillment is not a purely local dry run.
+- Confirm the fulfillment receipt and actual released amount/recipient. If a destination route follows Base settlement, track that route separately and report destination arrival only after its own evidence.
 
-```
-1. FIND LP          -> Best rate for (platform, currency, amount)
-2. LOCK ESCROW      -> LP's USDC locked in smart contract
-3. SEND FIAT        -> Agent sends payment via platform API
-4. GENERATE PROOF   -> Headless Reclaim proof (automated, no browser)
-5. SUBMIT PROOF     -> Attestation service signs EIP-712 attestation
-6. RECEIVE USDC     -> On-chain settlement, USDC in agent's wallet
-```
+## Handle interruption
 
-Settlement: typically under 5 minutes from fiat send to USDC receipt.
+Resume the saved intent before creating another one. On an unknown broadcast outcome inspect the transaction, current intent, and receipt. On rejected proof, examine recipient, amount, currency, status, timestamp, provider configuration, and intent binding; keep encrypted session material private. Never work around a rejection with a fabricated attestation or a depositor's manual release.
 
-## Platform Autonomy
+If fiat has already been sent and the intent expires, preserve the payment evidence and route the order through the application's recovery/support flow. Do not blindly pay again, cancel, or create a replacement intent. Intent extension, if supported by the active deployment, is a separate prepaid action with a bounded cost, not a free retry.
 
-| Platform | Agent Readiness | Auth Method | Setup |
-|----------|:---:|-------|--------|
-| Wise | 100% | API token (long-lived) | One-time token generation |
-| PayPal Business | 100% | OAuth client credentials | One-time app registration |
-| Venmo | 80% | Session cookies | Cookie export every few days |
-| Revolut Business | 70% | OAuth + device trust | Initial device binding |
-| CashApp | 20% | Device-based | Human-in-the-loop |
-| Zelle (any bank) | 20% | Bank auth | Human-in-the-loop |
+Return the quoted and settled amounts separately, current state, intent hash, transaction evidence, and any remaining destination or recovery step.
 
-Start with **Wise** for fully autonomous operation. Use **Venmo** with pre-exported cookies for semi-autonomous. Fall back to human-in-the-loop for CashApp/Zelle.
-
-## Quick Example
-
-```typescript
-import { OfframpClient } from '@zkp2p/sdk';
-
-const client = new OfframpClient({
-  walletClient,
-  chainId: 8453,
-  runtimeEnv: 'production',
-  apiKey: process.env.ZKP2P_API_KEY,
-});
-
-// 1. Get quote -- find best LP rate
-const quote = await client.getQuote({
-  paymentPlatforms: ['wise'],
-  fiatCurrency: 'EUR',
-  user: account.address,
-  recipient: account.address,
-  destinationChainId: 8453,
-  destinationToken: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-  amount: '500000000', // 500 USDC (6 decimals)
-  isExactFiat: false,
-});
-
-// 2. Signal intent -- lock LP's USDC in escrow
-const intentTxHash = await client.signalIntent({
-  depositId: quote.depositId,
-  amount: quote.amount,
-  toAddress: account.address,
-  processorName: quote.processorName,
-  payeeDetails: quote.payeeDetails,
-  fiatCurrencyCode: 'EUR',
-  conversionRate: quote.conversionRate,
-});
-
-// Steps 3-6: Send fiat, generate proof, submit, fulfill
-// -> See the peer-onramp skill for full implementation
-```
-
-## Cost Example
-
-Buying 500 USDC via Wise (EUR):
-
-| | |
-|---|---|
-| **You send** | ~510 EUR (at 1.02x conversion rate) |
-| **You receive** | 500 USDC on Base |
-| **LP spread** | ~2% (10 EUR) |
-| **Gas** | <$0.01 (Base L2) |
-| **Settlement** | ~5 minutes |
-
-Rates vary by platform, currency, and liquidity. Query `getQuote()` with `includeNearbyQuotes: true` to compare across LPs.
-
-## Full Implementation
-
-See the **`peer-onramp`** skill for the complete 6-step flow:
-- Platform-specific fiat payment code (Wise REST API, Venmo cookies)
-- Reclaim proof generation via `@reclaimprotocol/attestor-core`
-- Attestation submission to `attestation-service.zkp2p.xyz`
-- On-chain intent fulfillment via `fulfillIntent()`
-- Wise two-proof flow (transfer list + delivery confirmation)
-- Agent operation modes (fully autonomous, semi-autonomous, human-pays-agent-proves)
-
-## Taker Tiers and Intent Caps
-
-Per-intent caps depend on the taker's history. New addresses start small (~$50) and graduate to higher caps as they complete successful intents. Caps also vary by platform risk level -- Wise/Revolut have higher caps than CashApp/Zelle.
-
-See the **`peer-onramp`** skill for the full tier system (PEASANT through PEER_PRESIDENT), lockScore mechanics, and how to check your current tier via the Peerlytics API.
-
-## Environment Variables
-
-| Variable | Required | Description |
-|----------|:---:|-------------|
-| `PRIVATE_KEY` | Yes | Agent wallet private key (Base, holds ETH for gas) |
-| `ZKP2P_API_KEY` | Yes | ZKP2P platform API key |
-| `WISE_API_TOKEN` | For Wise | Wise personal API token |
-| `VENMO_COOKIES` | For Venmo | Exported session cookies (`api_access_token=...; v_id=...`) |
+Sources: [buyer guide](https://docs.peer.xyz/onramp-llm.md), [SDK client reference](https://docs.peer.xyz/developer/sdk/client-reference), [published SDK](https://www.npmjs.com/package/@zkp2p/sdk).

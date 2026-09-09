@@ -1,6 +1,11 @@
 ---
 name: create-zkp2p-provider
-description: Create or update Peer (ZKP2P) provider capture templates for buyer TEE, identity, and payment flows. Use when capturing an authenticated platform request, mapping transaction metadata and public parameters, adding a provider action type, or testing a provider through PeerAuth and the developer portal.
+description: Build a Peer provider capture template for a new payment or identity flow. Use for authenticated request mapping, metadata selectors, and TEE verification.
+license: MIT
+compatibility: "Authenticated browser and provider fixtures; Peer developer portal; access to the owning attestation integration."
+metadata:
+  author: zkp2p
+  reviewed: "2026-09-09"
 ---
 
 # Create a Peer provider
@@ -14,7 +19,8 @@ capture safely and the attestation service can verify.
   sensitive. Never paste them into a public issue, skill, commit, or PR.
 - Keep raw captures local and short-lived. Share only sanitized field shapes,
   selectors, and synthetic examples.
-- Ask before controlling an authenticated browser or reading network traffic.
+- Use browser/network access already authorized for this exact integration.
+  Ask only if access to the required account or capture is not authorized.
 - Never persist secrets in `paramNames`, metadata rows, logs, fixtures, or
   screenshots.
 
@@ -173,3 +179,6 @@ Report:
   consumer responsibilities.
 - [provider-examples.md](references/provider-examples.md) — compact current
   patterns.
+
+Published provider baseline: [@zkp2p/providers 7.9.2](https://www.npmjs.com/package/@zkp2p/providers).
+Verify the active service manifest and matching consumer before promoting a template.

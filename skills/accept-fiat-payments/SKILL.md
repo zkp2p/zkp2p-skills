@@ -1,132 +1,38 @@
 ---
 name: accept-fiat-payments
-description: Accept fiat payments from humans and receive USDC on Base. Generate payment links for Venmo, Wise, Revolut, CashApp, PayPal, and more. No merchant account needed. No KYC. Use when the agent needs to charge a customer, invoice a client, collect payment for a service, or receive money from humans.
+description: Integrate Peer Pay checkout to collect fiat payments and settle crypto. Use for payment links, merchant orders, signed webhooks, and fulfillment.
+license: MIT
+compatibility: "Server-side Node.js; @zkp2p/pay-sdk 4.0.1; merchant API key, configured API/checkout origins, webhook endpoint."
+metadata:
+  author: zkp2p
+  reviewed: "2026-09-09"
 ---
 
-# Accept Fiat Payments
+# Collect a payment with Peer Pay
 
-Charge humans in fiat. Receive USDC. No merchant account, no KYC, no 3-day settlement wait.
+Use hosted checkout when a merchant wants customers to pay through supported rails and receive crypto settlement. An order, a payment attempt, and settlement are separate records. Use the merchant API; do not improvise a maker deposit as a merchant checkout.
 
-## The Problem
+## Set the merchant contract
 
-Your agent provides a service -- generates content, completes tasks, runs infrastructure -- and needs to collect payment from a human. The human pays in fiat (Venmo, bank transfer, PayPal). The agent needs USDC in its wallet.
+Resolve merchant environment, server-side API key, authorized recipient and destination chain/token, either exact USDC amount or exact fiat amount/currency, fee payer, permitted rails, and return URLs. Confirm only missing material choices; reuse the merchant's configured defaults when the request intends them. Never put a merchant key in browser code or model-visible logs.
 
-Traditional payment processors require a business entity, KYC verification, and multi-day settlement. Agents cannot satisfy these requirements. Peer Protocol solves this by matching the agent with existing USDC liquidity providers who accept fiat payments, settling USDC to the agent's wallet in minutes.
+Use `@zkp2p/pay-sdk@4.0.1`. [The checked server example](scripts/checkout.ts) creates a USDC-denominated order with exact decimal strings and a bounded request. It writes an order when called. Supply API and checkout origins from the merchant's live environment configuration; do not replace service URLs with `peer.xyz` based on branding.
 
-## Why Not Stripe?
+1. Optionally call `checkQuoteAvailability` with the same amount and `enabledRails`. This is advisory and reserves nothing. If only nearby amounts are available, obtain authorization for an amount change rather than silently resizing the purchase.
+2. Call `createCheckout` server-side. Use either `requestedUsdcAmount` or `requestedFiatAmount` plus `requestedFiatCurrency`, never both. The amount is a human decimal string here, unlike protocol quote base-unit amounts.
+3. Persist the returned order identity and its association with your internal purchase before delivering `checkoutUrl`. Treat order tokens/checkout links as sensitive capabilities; do not publish them in issue bodies or analytics.
+4. Send the hosted link through the existing authorized customer flow. A redirect URL, iframe `checkout.success` message, or customer assertion is a UI signal, not fulfillment authority.
+5. Verify signed server webhooks using the current documented signature scheme and raw-body handling. Read [the webhook reference](https://docs.pay.peer.xyz/webhooks/payloads) and the merchant environment's current integration docs before implementing verification. Do not invent a header, algorithm, replay window, or shared secret.
+6. Reconcile events idempotently with the owning order and internal purchase. Release goods/credit on verified `ORDER_FULFILLED`. Use `PAYMENT_SETTLED` to reconcile actual payout amounts; one settled payment need not fulfill an entire order. A bridged destination can settle a different amount from its quote.
 
-| Method | Fee | Settlement | KYC / Merchant Account | Agent-Native |
-|--------|-----|------------|:----------------------:|:------------:|
-| Stripe | 2.9% + $0.30 | 2-3 business days | Yes (requires business entity) | No |
-| Square | 2.6% + $0.10 | 1-2 business days | Yes | No |
-| PayPal Business | 2.99% + $0.49 | 1-3 business days | Yes | No |
-| **Peer Protocol** | **~1% spread** | **Minutes** | **No** | **Yes** |
+## Handle retries and later events
 
-Peer Protocol requires zero identity verification. The agent gets a wallet, calls an API, and starts accepting payments immediately.
+- Creation timing out does not prove no order was created. Reconcile using the merchant's server records before retrying; do not invent an unsupported idempotency header or duplicate checkout links.
+- `PAYMENT_EXPIRED`/`PAYMENT_FAILED` concern an attempt. Do not automatically cancel the order or discard a possible late settlement.
+- If dynamic orders are enabled, process `ORDER_RESIZED` against the new server amount and the merchant's fulfillment policy. Do not enable resizing implicitly for fixed-price goods.
+- Chargebacks are additive facts. A fulfilled order can acquire a chargeback status while remaining fulfilled. Record `PAYMENT_CHARGEBACKED`, `ORDER_CHARGEBACKED`, and `ORDER_PARTIALLY_CHARGEBACKED` without rewriting historical fulfillment or claiming an automatic refund.
+- Read current rail/stake availability. Protection for Venmo/PayPal is not a blanket claim that every rail/payment is covered or cannot be disputed.
 
-## How It Works
+Return the created order ID privately, checkout delivery status, configured amount/destination, and verified payment/fulfillment state. For an integration change, include webhook signature, duplicate delivery, partial payment, late settlement, resize, and chargeback tests. Do not test by placing a real customer order unless that test transaction is specifically authorized.
 
-1. **Agent creates a checkout session** -- specifies amount and recipient wallet address.
-2. **Agent sends the checkout URL to the human** -- via Telegram, WhatsApp, Discord, email, or any channel.
-3. **Human pays via their preferred platform** -- selects Venmo, Wise, Revolut, etc. on the hosted checkout page, sends fiat, and generates a zkTLS proof via the PeerAuth browser extension. USDC settles to the agent's wallet on Base.
-
-The agent receives webhook notifications at each stage: payment started, proof generated, and fulfilled (USDC settled).
-
-## Supported Payment Platforms
-
-| Platform | Currencies |
-|----------|------------|
-| Venmo | USD |
-| CashApp | USD |
-| PayPal | USD, EUR, GBP |
-| Wise | USD, EUR, GBP, SGD, AUD, CAD, and more |
-| Revolut | EUR, GBP, USD, CHF, and more |
-| Zelle | USD |
-| Monzo | GBP |
-| MercadoPago | ARS, BRL, MXN |
-| N26 | EUR |
-
-## Checkout Modes
-
-| Mode | Payer Sees | Use When |
-|------|------------|----------|
-| `exact-fiat` | "Pay $50.00" -- no crypto jargon | Charging humans (recommended) |
-| `exact-token` | Per-platform fiat quotes for fixed USDC output | Crypto-native pricing |
-
-**Use `exact-fiat` for human payers.** The checkout page shows only a fiat amount -- no USDC, no tokens, no chains. The payer thinks they're paying $50 via Venmo, not buying crypto.
-
-## Quick Example (exact-fiat)
-
-```typescript
-const response = await fetch('https://api.pay.zkp2p.xyz/v1/checkout/session', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'x-api-key': process.env.PAY_API_KEY!,
-  },
-  body: JSON.stringify({
-    merchantId: process.env.MERCHANT_ID,
-    checkoutMode: 'exact-fiat',
-    fiatAmount: '50.00',
-    fiatCurrency: 'USD',
-    destinationChainId: 8453,                                    // Base
-    destinationToken: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', // USDC
-    recipientAddress: AGENT_WALLET,
-    metadata: { invoiceId: 'inv_001', service: 'content-gen' },
-  }),
-});
-
-const session = await response.json();
-
-// Send session.checkoutUrl to the human payer
-// Track via session.orderId
-```
-
-When the human completes payment, the agent receives an `order.fulfilled` webhook:
-
-```json
-{
-  "event": "order.fulfilled",
-  "data": {
-    "orderId": "ord_abc123",
-    "amountUsdc": "49.50",
-    "fiatAmount": "50.00",
-    "fiatCurrency": "USD",
-    "transactionHash": "0x..."
-  }
-}
-```
-
-## Use Cases
-
-- Agent charging for AI-generated content, reports, or media
-- Agent collecting bounty payments from humans for completed tasks
-- Agent invoicing clients for completed freelance or contract work
-- Subscription payments for agent-operated SaaS or API services
-- Marketplace agents collecting payment before releasing goods or access
-- Tip jars and pay-what-you-want for open agent services
-
-## Merchant Registration (Programmatic)
-
-Register via a single API call — no dashboard, no KYC, no manual steps:
-
-```bash
-curl -X POST https://api.pay.zkp2p.xyz/api/merchants \
-  -H "Content-Type: application/json" \
-  -d '{"name": "My AI Agent"}'
-```
-
-Returns `merchant.id` and `apiKey`. Store both securely — the API key is only returned once.
-
-## Environment Variables
-
-| Variable | Description |
-|----------|-------------|
-| `PAY_API_KEY` | API key from `POST /api/merchants` registration |
-| `MERCHANT_ID` | Merchant identifier from `POST /api/merchants` registration |
-| `WEBHOOK_SECRET` | Secret for verifying webhook signatures (from webhook registration) |
-| `PRIVATE_KEY` | Agent wallet private key (for on-chain operations) |
-
-## Full Implementation
-
-See the **`peer-checkout`** skill for complete implementation details: webhook handler setup, HMAC signature verification, order status polling, error codes, and the full order state machine.
+Sources: [published Pay SDK](https://www.npmjs.com/package/@zkp2p/pay-sdk), [Pay documentation](https://docs.pay.peer.xyz).
