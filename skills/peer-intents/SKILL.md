@@ -1,6 +1,6 @@
 ---
-name: fiat-to-crypto
-description: Buy crypto with bank or payment-app funds through Peer. Use for onramp integration, intent signaling, and Buyer TEE payment-proof fulfillment.
+name: peer-intents
+description: "Signal and fulfill Peer buyer intents for fiat-to-crypto orders. Use for the onramp flow, Buyer TEE payment proofs, and interrupted fulfillment."
 license: MIT
 compatibility: "Browser with Peer extension; @zkp2p/sdk 0.14.0; host wallet and selected environment RPC."
 metadata:
@@ -8,7 +8,7 @@ metadata:
   reviewed: "2026-09-09"
 ---
 
-# Buy crypto with fiat
+# Peer buyer intents
 
 The buyer pays fiat to a quoted maker and receives crypto after payment verification. Use this skill for the buyer journey or its integration. Do not turn a request to cash out crypto into a buyer intent.
 

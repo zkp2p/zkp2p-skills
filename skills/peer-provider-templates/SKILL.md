@@ -1,6 +1,6 @@
 ---
-name: create-zkp2p-provider
-description: Build a Peer provider capture template for a new payment or identity flow. Use for authenticated request mapping, metadata selectors, and TEE verification.
+name: peer-provider-templates
+description: "Create or update Peer provider capture templates for payment and identity attestations. Use for request matching, metadata selectors, and TEE verification."
 license: MIT
 compatibility: "Authenticated browser and provider fixtures; Peer developer portal; access to the owning attestation integration."
 metadata:
@@ -8,7 +8,7 @@ metadata:
   reviewed: "2026-09-09"
 ---
 
-# Create a Peer provider
+# Peer provider capture templates
 
 Turn an authenticated website request into a provider template that PeerAuth can
 capture safely and the attestation service can verify.

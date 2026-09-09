@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import type { PeerMetadataRow } from "@zkp2p/sdk";
-import { fiatQuoteUnits } from "../skills/check-fx-rates/scripts/quotes.ts";
-import { buildPaymentProof, selectPayment } from "../skills/fiat-to-crypto/scripts/payment-proof.ts";
-import { effectiveRate } from "../skills/manage-peer-vault/scripts/rates.ts";
-import { createUsdcCheckout } from "../skills/accept-fiat-payments/scripts/checkout.ts";
+import { fiatQuoteUnits } from "../skills/peer-quotes/scripts/quotes.ts";
+import { buildPaymentProof, selectPayment } from "../skills/peer-intents/scripts/payment-proof.ts";
+import { effectiveRate } from "../skills/peer-rate-managers/scripts/rates.ts";
+import { createUsdcCheckout } from "../skills/peer-checkout/scripts/checkout.ts";
 
 const expected = { paymentId: "synthetic-payment", amount: "50.00", currency: "USD", recipient: "synthetic-payee" };
 const row: PeerMetadataRow = { ...expected, hidden: false, originalIndex: 7, params: { paymentId: expected.paymentId, index: 99 } };

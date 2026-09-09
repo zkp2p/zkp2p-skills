@@ -1,6 +1,6 @@
 ---
-name: pay-humans-fiat
-description: Cash out USDC to a bank or payment app with Peer Cash. Use for fiat payouts, cash-out integration, and resuming a partial or stuck cash-out.
+name: peer-cashout
+description: "Create and resume cash-outs with the Peer Cash SDK: deposit USDC, receive fiat from buyers, track fills, and withdraw unlocked funds."
 license: MIT
 compatibility: "Node.js 22+; @zkp2p/cash 0.5.2; host wallet and Base RPC; browser identity flow for some payees."
 metadata:
@@ -8,9 +8,9 @@ metadata:
   reviewed: "2026-09-09"
 ---
 
-# Cash out to fiat
+# Peer Cash cash-outs
 
-Use this when someone holds crypto and wants fiat delivered to a specified payment account. Peer Cash turns their Base USDC into a maker deposit: a buyer sends fiat to the payee, proves the payment, and receives USDC. A cash-out can fill in pieces. An estimate is neither a bank transfer nor a settlement guarantee.
+Use this for the Peer Cash SDK cash-out lifecycle when someone holds crypto and wants fiat delivered to a specified payment account. Peer Cash turns their Base USDC into a maker deposit: a buyer sends fiat to the payee, proves the payment, and receives USDC. A cash-out can fill in pieces. An estimate is neither a bank transfer nor a settlement guarantee.
 
 ## Gather the actual payout instruction
 

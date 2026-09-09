@@ -1,6 +1,6 @@
 ---
-name: analyze-peer-protocol
-description: Measure Peer volume, makers, markets, and payment activity with explicit periods and attribution. Use for protocol reports and bounded activity monitoring.
+name: peer-analytics
+description: "Query Peerlytics for Peer protocol metrics, markets, attribution, and activity over explicit periods. Use for aggregate reports and bounded monitoring; read-only."
 license: MIT
 compatibility: "Node.js 22+; @peerlytics/sdk 4.0.0; existing Peerlytics API key and request budget."
 metadata:
@@ -8,7 +8,7 @@ metadata:
   reviewed: "2026-09-09"
 ---
 
-# Measure Peer activity accurately
+# Peer protocol analytics
 
 Turn a question into a metric before querying: scope (protocol, maker, integrator, vault, rail), UTC start/end, status, unit, and comparison period. “How much volume?” must distinguish signaled, fulfilled, released, and fiat-paid amounts. Do not present one as another or extrapolate a short window without labeling it.
 
