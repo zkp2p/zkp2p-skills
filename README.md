@@ -31,12 +31,14 @@ npx skills update
 | [peer-deposits](skills/peer-deposits/SKILL.md) | Create or manage an escrow deposit directly | Payees, payment methods, rates, fill limits, and withdrawals |
 | [peer-rate-managers](skills/peer-rate-managers/SKILL.md) | Create or manage a rate manager (pricing vault) | Rates, fees, and deposit delegation |
 | [peer-protocol-trace](skills/peer-protocol-trace/SKILL.md) | Investigate a specific intent, deposit, or transaction | Indexed and on-chain lifecycle reconciliation; read-only |
-| [peer-analytics](skills/peer-analytics/SKILL.md) | Query protocol metrics and activity over a period | Aggregate reports with explicit attribution and coverage; read-only |
+| [peer-analytics](skills/peer-analytics/SKILL.md) | Query canonical indexer metrics and activity over a period | Indexer-derived reports with attribution, coverage, and explorer links; read-only |
 | [peer-provider-templates](skills/peer-provider-templates/SKILL.md) | Build or update a provider capture template | Request matching, metadata extraction, and verified attestations |
 
 Choose `peer-cashout` for the Cash SDK's complete cash-out lifecycle; choose `peer-deposits` for direct escrow configuration and management. `peer-quotes` only requests pricing, while `peer-intents` covers buyer execution. `peer-protocol-trace` investigates individual records; `peer-analytics` measures activity across a defined scope and period.
 
 No generic token-transfer skill, duplicate API-reference skills, or unattended rate optimizer is bundled. A Peer pricing vault is not an ERC-4626 yield vault. A fiat payout, payment proof, and token settlement are distinct states.
+
+Analytics data comes only from the canonical ZKP2P indexer. Peerlytics web explorer links let readers inspect individual records; its API and SDK are not used.
 
 ## Runtime and version baseline
 
@@ -47,7 +49,6 @@ Reviewed September 9, 2026 against the current contracts, curator/indexer behavi
 | `@zkp2p/cash` | 0.5.2 |
 | `@zkp2p/sdk` | 0.14.0 |
 | `@zkp2p/pay-sdk` | 4.0.1 |
-| `@peerlytics/sdk` | 4.0.0 |
 | `@zkp2p/indexer-schema` | 0.22.0 |
 | `@zkp2p/contracts-v2` | 0.4.1 |
 | `@zkp2p/providers` (provider reference baseline) | 7.9.2 |
@@ -86,7 +87,7 @@ bun run check:links
 bun run check:upstream
 ```
 
-`check` validates Agent Skills metadata, body budgets, self-contained local links/imports, and catalog completeness; typechecks every TypeScript example against the lockfile; and tests amount precision, payment selection/proof indexing, rate behavior, and merchant request construction. Tests use synthetic data and do not broadcast, log in to payment accounts, or create live orders.
+`check` validates Agent Skills metadata, body budgets, self-contained local links/imports, and catalog completeness; typechecks every TypeScript example against the lockfile; and tests amount precision, payment selection/proof indexing, rate behavior, merchant request construction, and indexer pagination/error handling. Tests use synthetic data and do not broadcast, log in to payment accounts, or create live orders.
 
 The scheduled source check reports changed npm versions and broken linked documentation. It does not automatically rewrite financial workflows. `tests/scenarios.md` contains realistic agent evaluation tasks and the review rubric. After changing behavior, rerun those tasks with an independent agent and inspect its actual decisions; keyword matches are not a behavioral evaluation.
 

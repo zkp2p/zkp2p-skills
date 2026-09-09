@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 const pkg = await Bun.file(resolve(import.meta.dir, "../package.json")).json();
 const baseline: Record<string, string> = Object.fromEntries(
-  Object.entries<string>(pkg.devDependencies).filter(([name]) => name.startsWith("@zkp2p/") || name === "@peerlytics/sdk"),
+  Object.entries<string>(pkg.devDependencies).filter(([name]) => name.startsWith("@zkp2p/")),
 );
 baseline["@zkp2p/providers"] = "7.9.2";
 let changed = 0;
