@@ -2,10 +2,10 @@
 name: peer-deposits
 description: "Create and manage Peer escrow deposits through the protocol SDK: configure payees, payment methods, currencies, minimum rates, fill limits, and withdrawals."
 license: MIT
-compatibility: "@zkp2p/sdk 0.14.0 and viem 2.x; maker wallet; verified payee registration and Base RPC."
+compatibility: "@zkp2p/sdk 0.14.5 and viem 2.x; maker wallet; verified payee registration and Base RPC."
 metadata:
   author: zkp2p
-  reviewed: "2026-09-09"
+  reviewed: "2026-10-02"
 ---
 
 # Peer escrow deposits
@@ -16,7 +16,7 @@ Use this for direct creation and management of protocol escrow deposits. A maker
 
 Resolve the maker wallet, environment, USDC inventory, verified payees, offered currencies/platforms, minimum/maximum fill, and minimum acceptable fiat per USDC. Specify who monitors payments, whether seller automation is available, and who manages rates. Do not add unsupported corridors just to advertise liquidity.
 
-Read the configured deployment and payee requirements with `@zkp2p/sdk@0.14.0`; reuse public SDK defaults rather than old hardcoded escrow/curator URLs. Use [the checked preparation example](scripts/deposit.ts) for a single supported method with a previously registered payee hash. It does not register a payee or send funds.
+Read the configured deployment and payee requirements with `@zkp2p/sdk@0.14.5`; reuse public SDK defaults rather than old hardcoded escrow/curator URLs. Use [the checked preparation example](scripts/deposit.ts) for a single supported method with a previously registered payee hash. It does not register a payee or send funds.
 
 1. Verify each payee through the current curator identity flow. Keep raw account/session data out of logs. When passing `payeeData` to SDK preparation, registration can write external state; reusing a verified `payeeDetailsHashes` entry avoids re-registration. Never fabricate a hash to bypass identity requirements.
 2. Inspect live token balance, chain, escrow, and allowance. Prepare an amount-scoped approval if needed, directed to the actual escrow in the prepared deposit plan. Have the existing authorized signer simulate and confirm it; an approval alone creates no deposit.

@@ -4,11 +4,11 @@
   "private": true,
   "devDependencies": {
     "@types/bun": "1.4.2",
-    "@zkp2p/cash": "0.5.2",
-    "@zkp2p/contracts-v2": "0.4.1",
+    "@zkp2p/cash": "0.7.0",
+    "@zkp2p/contracts-v2": "0.4.3",
     "@zkp2p/indexer-schema": "0.22.0",
     "@zkp2p/pay-sdk": "4.0.1",
-    "@zkp2p/sdk": "0.14.0",
+    "@zkp2p/sdk": "0.14.5",
     "typescript": "5.9.3",
     "viem": "2.55.19",
     "yaml": "2.8.3"

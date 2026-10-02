@@ -2,10 +2,10 @@
 name: peer-protocol-trace
 description: "Investigate a specific Peer intent, deposit, or transaction using indexer records and on-chain receipts. Use for lifecycle diagnosis and reconciliation; read-only."
 license: MIT
-compatibility: "@zkp2p/sdk 0.14.0; optional @zkp2p/indexer-schema 0.22.0; environment-specific RPC and indexer access."
+compatibility: "@zkp2p/sdk 0.14.5; optional @zkp2p/indexer-schema 0.22.0; environment-specific RPC and indexer access."
 metadata:
   author: zkp2p
-  reviewed: "2026-09-09"
+  reviewed: "2026-10-02"
 ---
 
 # Trace Peer intents, deposits, and transactions
@@ -14,7 +14,7 @@ Use this for one concrete incident or a bounded set of related deposits/intents.
 
 ## Reconstruct the lifecycle
 
-Use `@zkp2p/sdk@0.14.0` for protocol/indexer reads and `@zkp2p/indexer-schema@0.22.0` for current entity types. [The checked example](scripts/trace.ts) uses the supported indexer wrappers. Configure a read-only wallet address, chain/RPC, and runtime environment; indexer credentials, if needed, remain in the host's secret store. Do not use a retired HyperIndex URL from another environment.
+Use `@zkp2p/sdk@0.14.5` for protocol/indexer reads and `@zkp2p/indexer-schema@0.22.0` for current entity types. [The checked example](scripts/trace.ts) uses the supported indexer wrappers. Configure a read-only wallet address, chain/RPC, and runtime environment; indexer credentials, if needed, remain in the host's secret store. Do not use a retired HyperIndex URL from another environment.
 
 1. If given a transaction, fetch it and its receipt from that chain. Record status, block, sender, destination contract, and decoded relevant events using the matching deployed ABI. A transaction being found or mined is not enough: check receipt success. If pending/unknown, say so before treating missing events as absence.
 2. Look up an intent with `client.indexer.getIntentByHash(hash)` or deposit with `getDepositById(id, { includeIntents: true })`. For an owner-scoped question use a bounded `getOwnerIntents`/deposit query. Preserve full IDs returned by the indexer rather than rebuilding them from obsolete SDK comments.
