@@ -2,10 +2,10 @@
 name: peer-quotes
 description: "Request and compare executable Peer quotes for a buyer wallet, amount, and payment method. Use for fees, quote expiry, and eligibility; read-only."
 license: MIT
-compatibility: "@zkp2p/sdk 0.14.0 and viem 2.x; buyer address; network access to the configured curator."
+compatibility: "@zkp2p/sdk 0.14.5 and viem 2.x; buyer address; network access to the configured curator."
 metadata:
   author: zkp2p
-  reviewed: "2026-09-09"
+  reviewed: "2026-10-02"
 ---
 
 # Peer quotes
@@ -16,7 +16,7 @@ Answer “what will I receive?” with live quotes for the actual trade. A marke
 
 Resolve buyer wallet, recipient, exact input or output, fiat currency, payment platforms, destination chain/token, and environment. If the user asks for a hypothetical market comparison without a wallet, label it indicative; do not claim execution eligibility.
 
-Use `@zkp2p/sdk@0.14.0`. [The checked example](scripts/quotes.ts) requests exact-fiat Base USDC quotes with `eligible` mode. It deliberately rejects excess decimal precision rather than silently rounding a spending instruction. Use the consuming project's package manager to install SDK and viem.
+Use `@zkp2p/sdk@0.14.5`. [The checked example](scripts/quotes.ts) requests exact-fiat Base USDC quotes with `eligible` mode. It deliberately rejects excess decimal precision rather than silently rounding a spending instruction. Use the consuming project's package manager to install SDK and viem.
 
 1. Construct `Zkp2pClient` with the host wallet/address account, chain `8453`, and explicit `runtimeEnv`. A read-only wallet can have an address account; quoting does not need a private key.
 2. Request `getQuote` or `getQuotesBestByPlatform` for the same amount, token, wallet, and destination. Exact-fiat input is a 6-decimal integer string; exact-token input uses that token's decimals. Keep monetary strings/bigints until formatting.

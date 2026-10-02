@@ -2,10 +2,10 @@
 name: peer-intents
 description: "Signal and fulfill Peer buyer intents for fiat-to-crypto orders. Use for the onramp flow, Buyer TEE payment proofs, and interrupted fulfillment."
 license: MIT
-compatibility: "Browser with Peer extension; @zkp2p/sdk 0.14.0; host wallet and selected environment RPC."
+compatibility: "Browser with Peer extension; @zkp2p/sdk 0.14.5; host wallet and selected environment RPC."
 metadata:
   author: zkp2p
-  reviewed: "2026-09-09"
+  reviewed: "2026-10-02"
 ---
 
 # Peer buyer intents
@@ -14,7 +14,7 @@ The buyer pays fiat to a quoted maker and receives crypto after payment verifica
 
 ## Establish the order
 
-Resolve environment, buyer wallet, receiving address, payment platform/currency, and either exact fiat spend or exact token output. Reuse existing spending authorization for that bounded order. Use `@zkp2p/sdk@0.14.0`; construct `Zkp2pClient` with the host wallet, Base chain ID `8453`, and the explicit runtime environment. Let the SDK choose the matching API/contracts; a website rebrand does not change API origins.
+Resolve environment, buyer wallet, receiving address, payment platform/currency, and either exact fiat spend or exact token output. Reuse existing spending authorization for that bounded order. Use `@zkp2p/sdk@0.14.5`; construct `Zkp2pClient` with the host wallet, Base chain ID `8453`, and the explicit runtime environment. Let the SDK choose the matching API/contracts; a website rebrand does not change API origins.
 
 1. Fetch a fresh `client.getQuote` with buyer and recipient addresses, destination chain/token, payment platforms, currency, amount, and `isExactFiat`. Fiat quote amounts are integer strings with 6 decimals. Token amounts use the destination token's decimals. Never calculate a binding order from an FX midpoint.
 2. For ordinary executable discovery, use `mode: 'eligible'`. If the user specifically wants staked chargeback-protected liquidity, use `eligible_with_chargeback_staked` and the actual buyer wallet. `eligible_with_chargeback` is discovery and may include insufficient-stake results. Whitelist and protection labels alone do not prove this buyer can signal.

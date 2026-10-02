@@ -2,10 +2,10 @@
 name: peer-cashout
 description: "Create and resume cash-outs with the Peer Cash SDK: deposit USDC, receive fiat from buyers, track fills, and withdraw unlocked funds."
 license: MIT
-compatibility: "Node.js 22+; @zkp2p/cash 0.5.2; host wallet and Base RPC; browser identity flow for some payees."
+compatibility: "Node.js 22+; @zkp2p/cash 0.7.0; host wallet and Base RPC; browser identity flow for some payees."
 metadata:
   author: zkp2p
-  reviewed: "2026-09-09"
+  reviewed: "2026-10-02"
 ---
 
 # Peer Cash cash-outs
@@ -16,12 +16,12 @@ Use this for the Peer Cash SDK cash-out lifecycle when someone holds crypto and 
 
 Resolve environment, amount, source chain/token, platform, currency, payee, and the authorized funding wallet. Reuse authorization already given for that exact payout; ask only for missing decisions. Never infer a recipient from an example or add a referral fee/code of your own. Keep account details in the host's private storage, out of transcripts and committed fixtures.
 
-Use `@zkp2p/cash@0.5.2` and a host-supplied wallet. Start with canonical Base USDC; routed assets add a separate funding leg. Read [the checked example](scripts/cashout.ts) for exact calls and types. Install dependencies in the consuming project with its package manager; no script here executes on import.
+Use `@zkp2p/cash@0.7.0` and a host-supplied wallet. Start with canonical Base USDC; routed assets add a separate funding leg. Read [the checked example](scripts/cashout.ts) for exact calls and types. Install dependencies in the consuming project with its package manager; no script here executes on import.
 
 ## Execute the lifecycle
 
-1. Call `cash.capabilities()` for the selected environment. Check the exact platform/currency pair, amount bounds, payee format, pricing mode, and attestation requirement. The default catalog does not prove live liquidity. UPI is a staging opt-in, not a production promise.
-2. Call `cash.estimate({ amount, currency }, { includeEta: false })` before registering a payee. Report the estimate and variable fill time. Most corridors bind a rate when an intent is signaled; Alipay/CNY snapshots a creation-time rate. Use the returned corridor pricing, not one global assumption.
+1. Call `cash.capabilities()` for the selected environment. Check the exact platform/currency pair, amount bounds, payee format, pricing mode, and attestation requirement. The default catalog does not prove live liquidity. UPI/INR is available in production, preproduction, and staging without opt-in.
+2. Call `cash.estimate({ amount, currency }, { includeEta: false })` before registering a payee. Report the estimate and variable fill time. Every corridor, including Alipay/CNY and UPI/INR, binds the zero-spread oracle rate when each buyer signals an intent; estimates do not lock that rate.
 3. Register/prove the specified payee through the existing identity flow where required. New Wise, PayPal, and Alipay payees can require a browser identity attestation. `PAYEE_VERIFICATION_REQUIRED` is an unmet prerequisite; do not substitute dummy proof or put session cookies in code.
 4. For a host-controlled signer, call `cash.prepare(input)`. **This registers payee details with the curator**, although it does not broadcast. Review every returned `txs[]` with its matching `steps[]`, including chain, spender, value, token amount, and target. Submit sequentially through the authorized wallet and confirm each receipt. Do not infer that every prepared plan contains exactly two transactions.
 5. Pass the confirmed **createDeposit** receipt to `cash.finalizePreparedCashout(receipt)`. Persist the returned `depositId`, transaction hash, chain/environment, and owning account before subsequent work. The Cash resume key is `escrowAddress_onchainId`; keep the returned string rather than rebuilding it from a bare number.

@@ -2,10 +2,10 @@
 name: peer-rate-managers
 description: "Create and manage Peer rate managers (pricing vaults), set rates and fees, and assign or clear deposit rate-manager delegation."
 license: MIT
-compatibility: "@zkp2p/sdk 0.14.0 and viem 2.x; configured Base deployment; authorized manager or depositor wallet."
+compatibility: "@zkp2p/sdk 0.14.5 and viem 2.x; configured Base deployment; authorized manager or depositor wallet."
 metadata:
   author: zkp2p
-  reviewed: "2026-09-09"
+  reviewed: "2026-10-02"
 ---
 
 # Peer rate managers
@@ -14,7 +14,7 @@ A Peer vault is a rate manager for maker deposits. It is not an ERC-4626 pooled 
 
 ## Read before changing a rate
 
-Resolve environment, registry address, `rateManagerId`, authorized manager wallet, affected escrow/deposits, currency/method pairs, and requested pricing or fee policy. Read live configuration using `@zkp2p/sdk@0.14.0` and the relevant deployment's contract ABI. Never invent addresses from a marketing domain or copy a staging registry into production.
+Resolve environment, registry address, `rateManagerId`, authorized manager wallet, affected escrow/deposits, currency/method pairs, and requested pricing or fee policy. Read live configuration using `@zkp2p/sdk@0.14.5` and the relevant deployment's contract ABI. Never invent addresses from a marketing domain or copy a staging registry into production.
 
 For an existing vault, read manager, fee recipient, current/max fee, configured rate pairs, and each target deposit's own floor and delegation. A requested percentage needs a declared unit conversion: rates and fees here use 18-decimal fixed-point values, not integer basis points passed directly to the contract.
 
