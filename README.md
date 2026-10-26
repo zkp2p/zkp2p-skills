@@ -47,13 +47,13 @@ Reviewed October 2, 2026 against the current contracts, curator/indexer behavior
 | Package | Version |
 | --- | --- |
 | `@zkp2p/cash` | 0.7.0 |
-| `@zkp2p/sdk` | 0.14.5 |
+| `@zkp2p/sdk` | 0.14.11 |
 | `@zkp2p/pay-sdk` | 4.0.1 |
 | `@zkp2p/indexer-schema` | 0.22.0 |
 | `@zkp2p/contracts-v2` | 0.4.3 |
 | `@zkp2p/providers` (provider reference baseline) | 7.9.2 |
 
-The SDK depends on stable contracts `0.4.3`; a newer package tag is not proof of a deployed contract change. Resolve the environment and live deployment before acting. Public site hosts have moved to `peer.xyz`; some supported service origins still use `zkp2p.xyz`. Keep the SDK/environment defaults instead of performing a global domain substitution.
+The SDK depends on contracts `0.4.4-rc.2`; a newer package tag is not proof of a deployed contract change. Resolve the environment and live deployment before acting. Public site hosts have moved to `peer.xyz`; some supported service origins still use `zkp2p.xyz`. Keep the SDK/environment defaults instead of performing a global domain substitution.
 
 For consuming projects, install the dependencies named by the selected skill with that project's package manager. Skills are instructions, not managed wallet services. Use existing task authorization and secret storage; do not ask the user to paste private keys into a conversation. Examples prepare or perform the documented work only when called explicitly by the host. Preparation can still register a payee or request an attestation, as noted in the relevant skill.
 
