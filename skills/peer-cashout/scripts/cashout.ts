@@ -1,24 +1,23 @@
-import { createCashClient, type CashClientOptions, type CashoutInput, type PreparedCashoutReceipt } from "@zkp2p/cash";
+import { createPeer, type PeerOptions, type PreparedSellReceipt, type SellInput } from "@zkp2p/sdk";
 
-export function cashClient(environment: CashClientOptions["environment"]) {
-  return createCashClient({ environment });
+export function peerClient(environment: PeerOptions["environment"]) {
+  return createPeer({ environment });
 }
 
-type Cash = ReturnType<typeof cashClient>;
+type Sell = ReturnType<typeof peerClient>["sell"];
 
 // amount is Base USDC integer units (6 decimals), not a floating-point dollar value.
-export function estimateCashout(cash: Cash, amount: bigint, currency: Parameters<Cash["estimate"]>[0]["currency"]) {
-  return cash.estimate({ amount, currency }, { includeEta: false });
+export function estimateCashout(sell: Sell, amount: bigint, currency: Parameters<Sell["estimate"]>[0]["currency"]) {
+  return sell.estimate({ amount, currency }, { includeEta: false });
 }
 
 // This writes payee registration state. Call only for an authorized payout.
-export function prepareCashout(cash: Cash, input: CashoutInput) {
-  if (input.source) throw new Error("This example prepares Base USDC only; resolve source funding separately");
-  return cash.prepare(input);
+export function prepareCashout(sell: Sell, input: SellInput) {
+  return sell.prepare(input);
 }
 
 // Use only the confirmed createDeposit receipt from the reviewed prepared plan.
-export function resumeCreatedCashout(cash: Cash, receipt: PreparedCashoutReceipt) {
+export function resumeCreatedCashout(sell: Sell, receipt: PreparedSellReceipt) {
   if (receipt.status !== "success") throw new Error("createDeposit transaction reverted");
-  return cash.finalizePreparedCashout(receipt);
+  return sell.finalizePrepared(receipt);
 }
