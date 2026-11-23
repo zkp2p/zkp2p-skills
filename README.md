@@ -42,7 +42,7 @@ Analytics data comes only from the canonical ZKP2P indexer. Peerlytics web explo
 
 ## Runtime and version baseline
 
-Reviewed October 2, 2026 against the current contracts, curator/indexer behavior, Peer Cash, merchant SDK, and public documentation. Exact packages used to typecheck the examples:
+Reviewed October 2, 2026 against the current contracts, curator/indexer behavior, merchant SDK, and public documentation. Exact packages used to typecheck the examples:
 
 | Package | Version |
 | --- | --- |
@@ -52,9 +52,9 @@ Reviewed October 2, 2026 against the current contracts, curator/indexer behavior
 | `@zkp2p/contracts-v2` | 0.4.3 |
 | `@zkp2p/providers` (provider reference baseline) | 7.9.2 |
 
-`peer-cashout` uses `createPeer` and `peer.sell`, which first ship in `@zkp2p/sdk` 0.16.0-rc.1 (npm dist-tag `rc`). The other SDK skills were reviewed against 0.14.11, and their examples typecheck unchanged against 0.16.0-rc.1. Existing `@zkp2p/cash` integrations keep working; new cash-outs start with `@zkp2p/sdk`.
+`peer-cashout` uses `createPeer` and `peer.sell`, which first ship in `@zkp2p/sdk` 0.16.0-rc.1 (npm dist-tag `rc`). The other SDK skills were reviewed against 0.14.11, and their examples typecheck unchanged against 0.16.0-rc.1. To move an existing integration, follow the [migration guide](https://docs.peer.xyz/developer/sell/migrate-from-cash).
 
-The SDK depends on contracts `0.4.4-rc.2`; a newer package tag is not proof of a deployed contract change. Resolve the environment and live deployment before acting. Public site hosts have moved to `peer.xyz`; some supported service origins still use `zkp2p.xyz`. Keep the SDK/environment defaults instead of performing a global domain substitution.
+A newer contracts package tag is not proof of a deployed contract change. Resolve the environment and live deployment before acting. Public site hosts have moved to `peer.xyz`; some supported service origins still use `zkp2p.xyz`. Keep the SDK/environment defaults instead of performing a global domain substitution.
 
 For consuming projects, install the dependencies named by the selected skill with that project's package manager. Skills are instructions, not managed wallet services. Use existing task authorization and secret storage; do not ask the user to paste private keys into a conversation. Examples prepare or perform the documented work only when called explicitly by the host. Preparation can still register a payee or request an attestation, as noted in the relevant skill.
 
