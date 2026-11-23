@@ -24,7 +24,7 @@ npx skills update
 
 | Skill | Use it when | Result |
 | --- | --- | --- |
-| [peer-cashout](skills/peer-cashout/SKILL.md) | Create or resume a cash-out through Peer Cash | Deposit-backed fiat delivery, fill tracking, and recovery |
+| [peer-cashout](skills/peer-cashout/SKILL.md) | Create or resume a cash-out with `peer.sell` from the Peer SDK | Deposit-backed fiat delivery, fill tracking, and recovery |
 | [peer-intents](skills/peer-intents/SKILL.md) | Signal or fulfill a buyer intent in the onramp flow | Confirmed intent, Buyer TEE proof, and settlement evidence |
 | [peer-checkout](skills/peer-checkout/SKILL.md) | Create a Peer Pay merchant checkout order | Payment link and authenticated, idempotent order fulfillment |
 | [peer-quotes](skills/peer-quotes/SKILL.md) | Request or compare quotes for a buyer wallet | Executable pricing, fees, expiry, and eligibility; read-only |
@@ -34,7 +34,7 @@ npx skills update
 | [peer-analytics](skills/peer-analytics/SKILL.md) | Query canonical indexer metrics and activity over a period | Indexer-derived reports with attribution, coverage, and explorer links; read-only |
 | [peer-provider-templates](skills/peer-provider-templates/SKILL.md) | Build or update a provider capture template | Request matching, metadata extraction, and verified attestations |
 
-Choose `peer-cashout` for the Cash SDK's complete cash-out lifecycle; choose `peer-deposits` for direct escrow configuration and management. `peer-quotes` only requests pricing, while `peer-intents` covers buyer execution. `peer-protocol-trace` investigates individual records; `peer-analytics` measures activity across a defined scope and period.
+Choose `peer-cashout` for the SDK's complete `peer.sell` cash-out lifecycle; choose `peer-deposits` for direct escrow configuration and management. `peer-quotes` only requests pricing, while `peer-intents` covers buyer execution. `peer-protocol-trace` investigates individual records; `peer-analytics` measures activity across a defined scope and period.
 
 No generic token-transfer skill, duplicate API-reference skills, or unattended rate optimizer is bundled. A Peer pricing vault is not an ERC-4626 yield vault. A fiat payout, payment proof, and token settlement are distinct states.
 
@@ -46,12 +46,13 @@ Reviewed October 2, 2026 against the current contracts, curator/indexer behavior
 
 | Package | Version |
 | --- | --- |
-| `@zkp2p/cash` | 0.7.0 |
-| `@zkp2p/sdk` | 0.14.11 |
+| `@zkp2p/sdk` | 0.16.0-rc.1 |
 | `@zkp2p/pay-sdk` | 4.0.1 |
 | `@zkp2p/indexer-schema` | 0.22.0 |
 | `@zkp2p/contracts-v2` | 0.4.3 |
 | `@zkp2p/providers` (provider reference baseline) | 7.9.2 |
+
+`peer-cashout` uses `createPeer` and `peer.sell`, which first ship in `@zkp2p/sdk` 0.16.0-rc.1 (npm dist-tag `rc`). The other SDK skills were reviewed against 0.14.11, and their examples typecheck unchanged against 0.16.0-rc.1. Existing `@zkp2p/cash` integrations keep working; new cash-outs start with `@zkp2p/sdk`.
 
 The SDK depends on contracts `0.4.4-rc.2`; a newer package tag is not proof of a deployed contract change. Resolve the environment and live deployment before acting. Public site hosts have moved to `peer.xyz`; some supported service origins still use `zkp2p.xyz`. Keep the SDK/environment defaults instead of performing a global domain substitution.
 
