@@ -9,7 +9,7 @@
         "@zkp2p/contracts-v2": "0.4.3",
         "@zkp2p/indexer-schema": "0.22.0",
         "@zkp2p/pay-sdk": "4.0.1",
-        "@zkp2p/sdk": "0.16.0-rc.1",
+        "@zkp2p/sdk": "0.16.0",
         "typescript": "5.9.3",
         "viem": "2.55.19",
         "yaml": "2.8.3",
@@ -67,7 +67,7 @@
 
     "@zkp2p/pay-shared": ["@zkp2p/pay-shared@4.0.1", "", {}, "sha512-c3lMkE5oiPMdx/XKjl1STpICw/ynNYsIK5W7yoKbKFxNS6LwwKBksa35V9BGRfsEdgASFVDuixNo8gq7rrmNTg=="],
 
-    "@zkp2p/sdk": ["@zkp2p/sdk@0.16.0-rc.1", "", { "dependencies": { "@zkp2p/zkp2p-attestation": "4.0.0-rc.12", "ethers": "^6.0.0", "ox": "^0.11.1" }, "peerDependencies": { "react": ">=16.8.0", "viem": "^2.37.3" }, "optionalPeers": ["react"] }, "sha512-D47z2pVdEgPDWz1MA7usDYTmWR+ceU5uuNdVj+HkyhhTAVauHXsCS1n9u8euRCnawJeWaC4QWU8ajjXt1Uw+hA=="],
+    "@zkp2p/sdk": ["@zkp2p/sdk@0.16.0", "", { "dependencies": { "@zkp2p/zkp2p-attestation": "4.0.0-rc.12", "ethers": "^6.0.0", "ox": "^0.11.1" }, "peerDependencies": { "react": ">=16.8.0", "viem": "^2.37.3" }, "optionalPeers": ["react"] }, "sha512-xu5nrxhlwgxq212KGNIQT3KsEVhadcZflfznG11LR+iTy/93i+PiXPpCM5oqBSpgA3mL220qMxgwtjSr4bV/3w=="],
 
     "@zkp2p/zkp2p-attestation": ["@zkp2p/zkp2p-attestation@4.0.0-rc.12", "", { "dependencies": { "@peculiar/x509": "^1.14.0", "ethers": "^6.13.4" }, "bin": { "zkp2p-attestation-verify": "dist/cli/verify.js" } }, "sha512-0Ezdbw/IFQiJ35blIPgayghH0OzkJX2u+27aTeWpGYw9GIXf67uFxaH8O1u0Thjf6uXvwAqLzFXSh1bJKftkqw=="],
 
