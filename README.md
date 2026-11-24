@@ -46,13 +46,13 @@ Reviewed October 2, 2026 against the current contracts, curator/indexer behavior
 
 | Package | Version |
 | --- | --- |
-| `@zkp2p/sdk` | 0.16.0-rc.1 |
+| `@zkp2p/sdk` | 0.16.0 |
 | `@zkp2p/pay-sdk` | 4.0.1 |
 | `@zkp2p/indexer-schema` | 0.22.0 |
 | `@zkp2p/contracts-v2` | 0.4.3 |
 | `@zkp2p/providers` (provider reference baseline) | 7.9.2 |
 
-`peer-cashout` uses `createPeer` and `peer.sell`, which first ship in `@zkp2p/sdk` 0.16.0-rc.1 (npm dist-tag `rc`). The other SDK skills were reviewed against 0.14.11, and their examples typecheck unchanged against 0.16.0-rc.1. To move an existing integration, follow the [migration guide](https://docs.peer.xyz/developer/sell/migrate-from-cash).
+`peer-cashout` uses `createPeer` and `peer.sell` from `@zkp2p/sdk@0.16.0`. To move an existing integration, follow the [migration guide](https://docs.peer.xyz/developer/sell/migrate-from-cash).
 
 A newer contracts package tag is not proof of a deployed contract change. Resolve the environment and live deployment before acting. Public site hosts have moved to `peer.xyz`; some supported service origins still use `zkp2p.xyz`. Keep the SDK/environment defaults instead of performing a global domain substitution.
 

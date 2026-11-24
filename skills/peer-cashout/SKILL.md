@@ -2,7 +2,7 @@
 name: peer-cashout
 description: "Create and resume cash-outs with the Peer SDK (createPeer, peer.sell): deposit Base USDC, receive fiat from buyers, track fills, and withdraw unlocked funds."
 license: MIT
-compatibility: "Node.js 22+; @zkp2p/sdk 0.16.0-rc.1 and viem 2.x; host wallet and Base RPC; browser identity flow for some payees."
+compatibility: "Node.js 22+; @zkp2p/sdk 0.16.0 and viem 2.x; host wallet and Base RPC; browser identity flow for some payees."
 metadata:
   author: zkp2p
   reviewed: "2026-11-23"
@@ -16,7 +16,7 @@ Use this for the Peer SDK sell lifecycle (`createPeer(...).sell`) when someone h
 
 Resolve environment, amount, platform, currency, payee, and the authorized funding wallet. Reuse authorization already given for that exact payout; ask only for missing decisions. Never infer a recipient from an example or add a referral fee/code of your own. Keep account details in the host's private storage, out of transcripts and committed fixtures.
 
-Use `@zkp2p/sdk@0.16.0-rc.1` (npm dist-tag `rc`; pin it exactly) and a host-supplied viem wallet. The SDK sells canonical Base USDC only; it does not bridge or route other assets, so fund the wallet with Base USDC first. Read [the checked example](scripts/cashout.ts) for exact calls and types. Install dependencies in the consuming project with its package manager; no script here executes on import.
+Use `@zkp2p/sdk@0.16.0` and a host-supplied viem wallet. The cash-out example sells canonical Base USDC. Fund the wallet with Base USDC before running it. Read [the checked example](scripts/cashout.ts) for exact calls and types. Install dependencies in the consuming project with its package manager; no script here executes on import.
 
 ## Execute the lifecycle
 
